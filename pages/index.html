@@ -240,6 +240,9 @@ function route(){closeDlg();window.scrollTo(0,0);
   if(h==="acces")return vueAcces();if(h==="mon-code")return vueCode();if(h==="aide")return vueAide();vueAccueil()}
 window.addEventListener("hashchange",route);
 (async()=>{try{ME=await api("moi")}catch(e){if(ME===null)$("#main").innerHTML=`<p class="err">${esc(e.message)}</p>`;return}
+  // Applis autorisées : connexion ouverte d'avance et appli réveillée (fonction et base), pour que la tuile s'ouvre vite.
+  for(const k of ["planning","flotte"]){const u=ME.apps[k]?.url;if(!u||ME[k]==="aucun"||ME.provisoire)continue;
+    try{const l=document.createElement("link");l.rel="preconnect";l.href=u;document.head.appendChild(l);fetch(u+"/api/health",{mode:"no-cors",cache:"no-store"}).catch(()=>{})}catch(_){}}
   $("#ini").textContent=ini(ME.nom);$("#nom").textContent=ME.nom;$("#moncode").hidden=ME.secours||ME.provisoire;
   const ref=new URLSearchParams(location.search).get("refus");if(ref){history.replaceState(null,"","/"+location.hash);toast(`Pas d'accès à ${ME.apps[ref]?.nom||"cette appli"}. Demandez à un administrateur.`)}
   route()})();
