@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="fr"><head><meta name="robots" content="noindex, nofollow"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<title>Portail DSV Angers</title><link rel="icon" type="image/png" href="/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Mêmes repères que l'appli Planning journalier, en mode clair uniquement. */
+:root{
+  color-scheme:light;
+  --bg:#f3f5f8;--surface:#ffffff;--surface2:#f7f9fc;--fg:#172234;--muted:#5b677a;--line:#d5dbe5;
+  --ink:#0f2a5c;--navy:#08296c;--accent:#2F80D8;--accent-fg:#ffffff;
+  --ok:#1d7a4a;--ok-bg:#e1f3e9;--warn:#c2410c;--warn-bg:#fdeadd;--bad:#b4232a;--bad-bg:#fbe3e4;--info:#1f56b3;--info-bg:#e3ecfb;--off:#8a95a6;--off-bg:#e6eaf0;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-display:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:6px;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 var(--f-body);-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--ink)}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1100px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;color:var(--ink)}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--ink);color:#fff}
+.top .wrap{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-block:10px}
+.brand{font-family:var(--f-display);font-weight:700;font-size:20px;letter-spacing:.02em;display:flex;align-items:center;gap:10px;text-transform:uppercase;color:#fff;text-decoration:none}
+.brand small{display:block;font-family:var(--f-body);font-weight:500;font-size:12px;opacity:.75;letter-spacing:.06em}
+.logo{width:36px;height:36px;border-radius:6px;display:block;flex:none;box-shadow:0 0 0 1px rgb(255 255 255 / .3)}
+.who{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:14px;flex-wrap:wrap}
+.who .ini{width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px}
+.who a,.who button{background:rgb(255 255 255 / .1);border:1px solid rgb(255 255 255 / .25);color:#fff;border-radius:var(--r);padding:5px 10px;cursor:pointer;font-weight:600;font-size:13px;text-decoration:none}
+.who a:hover,.who button:hover{background:rgb(255 255 255 / .18)}
+main{padding-block:28px 48px}
+.screen{display:flex;flex-direction:column;gap:20px}
+.lead{color:var(--muted);margin:4px 0 0;max-width:62ch}
+.btn{border:0;border-radius:var(--r);padding:10px 16px;background:var(--accent);color:var(--accent-fg);font-weight:600;cursor:pointer;text-decoration:none;display:inline-block}
+.btn.sec{background:var(--surface);color:var(--fg);border:1px solid var(--line)}
+.btn.bad{background:var(--bad);color:#fff}
+.btn.sm{padding:6px 10px;font-size:13px}
+.btn:disabled{opacity:.6;cursor:default}
+.field{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:600;color:var(--muted)}
+.field input,.field select{background:var(--bg);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;width:100%;color:var(--fg);font-weight:500}
+.err{color:var(--bad);font-size:14px;min-height:1.4em;margin:0}
+.note{font-size:13px;color:var(--muted);margin:0}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.tile{position:relative;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:12px;cursor:pointer;min-height:180px;color:var(--fg);text-decoration:none;transition:border-color .15s,box-shadow .15s,transform .15s}
+.tile:hover:not(.off){border-color:var(--accent);box-shadow:0 8px 24px rgb(15 42 92 / .1);transform:translateY(-1px)}
+.tile .ic{width:48px;height:48px;border-radius:10px;background:var(--navy);color:#fff;display:grid;place-items:center}
+.tile .ic svg{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tile h2{font-size:24px}
+.tile p{margin:0;color:var(--muted);font-size:14px}
+.tile .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.tile .go{font-weight:600;color:var(--accent);font-size:14px}
+.tile.off{cursor:not-allowed;background:var(--surface2)}
+.tile.off .ic{background:#b8c1cf}
+.tile.off h2,.tile.off p{color:var(--off)}
+.tile.admin .ic{background:var(--accent)}
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600;white-space:nowrap}
+.pill.ok{background:var(--ok-bg);color:var(--ok)}.pill.info{background:var(--info-bg);color:var(--info)}.pill.off{background:var(--off-bg);color:var(--muted)}.pill.warn{background:var(--warn-bg);color:var(--warn)}
+.bar{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:860px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle;font-size:14px}
+th{font-family:var(--f-display);font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-size:12px;color:var(--muted);background:var(--surface2)}
+tr:last-child td{border-bottom:0}
+tr.inactif td{color:var(--off)}
+td .nm{font-weight:600}
+td .sub{display:block;font-size:12px;color:var(--muted)}
+td select{border:1px solid var(--line);border-radius:var(--r);padding:5px 6px;background:var(--surface);font-size:14px}
+td .acts{display:flex;gap:6px;flex-wrap:wrap}
+.chk{display:flex;align-items:center;gap:6px}
+.chk input{width:18px;height:18px;accent-color:var(--accent)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;color:var(--muted)}
+.add{padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;align-items:end}
+.add .chk{font-size:14px;font-weight:600;color:var(--muted);padding-bottom:10px}
+.side{padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.side h3{font-size:18px}
+.jr{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px;max-height:320px;overflow:auto}
+.jr time{font-family:var(--f-mono);font-size:12px;color:var(--muted);margin-right:8px}
+.overlay{position:fixed;inset:0;background:rgb(15 42 92 / .45);display:grid;place-items:center;padding:16px;z-index:20}
+.dlg{background:var(--surface);border-radius:12px;max-width:440px;width:100%;padding:24px;display:flex;flex-direction:column;gap:14px;box-shadow:0 20px 50px rgb(0 0 0 / .25)}
+.dlg h3{font-size:22px}.dlg p{margin:0}
+.dlg .acts{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.code-big{font-family:var(--f-mono);font-size:30px;letter-spacing:.14em;text-align:center;background:var(--bg);border:1px dashed var(--line);border-radius:var(--r);padding:14px;color:var(--ink);user-select:all}
+.narrow{max-width:520px;margin:0 auto;width:100%}
+.form{padding:20px;display:flex;flex-direction:column;gap:14px}
+.rules{margin:0;padding-left:18px;font-size:14px;color:var(--muted)}
+.help{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.help .card{padding:18px 20px;display:flex;flex-direction:column;gap:8px}
+.help h3{font-size:19px}
+.help p,.help li{margin:0;font-size:15px;max-width:62ch}
+.help ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.steps{counter-reset:s;list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px}
+.steps li{counter-increment:s;display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start}
+.steps li::before{content:counter(s);width:26px;height:26px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;z-index:30;max-width:calc(100% - 32px)}
+.credit{text-align:center;font-size:11px;opacity:.55;margin:24px 0 0}
+@media (prefers-reduced-motion:reduce){.tile{transition:none}.tile:hover{transform:none}}
+@media (max-width:560px){.who .nm{display:none}.brand{font-size:17px}}
+</style><style id="nozoom">html{-webkit-text-size-adjust:100%;text-size-adjust:100%}@media (pointer:coarse),(max-width:900px){input,select,textarea{font-size:16px!important}}</style>
+</head><body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="#"><img class="logo" src="/logo.png" alt=""><span>Portail<small>DSV Angers · applications</small></span></a>
+  <div class="who"><span class="ini" id="ini">?</span><span class="nm" id="nom"></span><a href="#mon-code" id="moncode" hidden>Mon code</a><a href="#aide">Aide</a><a href="/api/logout">Déconnexion</a></div>
+</div></header>
+<main class="wrap" id="main"><p class="note">Chargement…</p></main>
+<div id="layer"></div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const NIV={aucun:"Pas d'accès",consult:"Consultation",modif:"Modification"};
+const NIVEAUX={planning:["aucun","modif"],flotte:["aucun","consult","modif"]};
+let ME=null,PERS=[];
+async function api(p,o={}){const r=await fetch("/api/"+p,{cache:"no-store",...o,headers:{"Content-Type":"application/json",...(o.headers||{})}});
+  if(r.status===401){location.replace("/connexion");throw new Error("Connexion requise")}
+  if(!r.ok)throw new Error((await r.text()).slice(0,300)||("Erreur "+r.status));
+  return r.headers.get("content-type")?.includes("json")?r.json():r.text()}
+function toast(t){const d=document.createElement("div");d.className="toast";d.setAttribute("role","status");d.textContent=t;document.body.append(d);setTimeout(()=>d.remove(),4000)}
+function dialog(html){$("#layer").innerHTML=`<div class="overlay"><div class="dlg" role="dialog" aria-modal="true">${html}</div></div>`;const f=$("#layer .dlg .acts button:last-child");f&&f.focus()}
+function closeDlg(){$("#layer").innerHTML=""}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeDlg()});
+const ini=n=>String(n||"?").split(/\s+/).filter(Boolean).map(w=>w[0]).join("").slice(0,2).toUpperCase();
+const quand=t=>{if(!t)return "jamais";const d=new Date(t),j=new Date();const h=d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+  if(d.toDateString()===j.toDateString())return "aujourd'hui "+h;j.setDate(j.getDate()-1);if(d.toDateString()===j.toDateString())return "hier "+h;
+  return d.toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit"})+" "+h};
+const ICON={
+  planning:'<svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M7 13.5h3M14 13.5h3M7 17h3"/></svg>',
+  flotte:'<svg viewBox="0 0 24 24"><path d="M2 6h11v10H2zM13 9.5h4.5L21 13v3h-8z"/><circle cx="6" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></svg>',
+  cle:'<svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3M14 9l2 2"/></svg>',
+  cadenas:'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>'
+};
+const DESC={planning:"Feuille de présence du jour, tournées, conducteurs et planning hebdo.",flotte:"Flotte, réparations, contrôles et véhicules relais."};
+
+function vueAccueil(){
+  const tuiles=["planning","flotte"].map(k=>{const a=ME.apps[k],lv=ME[k],ok=lv!=="aucun"&&a.pret;
+    const foot=lv==="aucun"?`<span class="pill off">${ICON.cadenas} Pas d'accès</span><span class="note">Demandez à un administrateur</span>`
+      :!a.pret?`<span class="pill off">Pas encore relié</span><span class="note">Réglage Vercel à faire</span>`
+      :`<span class="pill ${lv==="consult"?"info":"ok"}">${NIV[lv]}</span><span class="go">Ouvrir →</span>`;
+    return ok?`<a class="tile" href="/api/ouvrir?app=${k}"><span class="ic">${ICON[k]}</span><h2>${esc(a.nom)}</h2><p>${DESC[k]}</p><span class="foot">${foot}</span></a>`
+      :`<div class="tile off" aria-disabled="true"><span class="ic">${ICON[k]}</span><h2>${esc(a.nom)}</h2><p>${DESC[k]}</p><span class="foot">${foot}</span></div>`}).join("")
+    +(ME.admin?`<a class="tile admin" href="#acces"><span class="ic">${ICON.cle}</span><h2>Accès</h2><p>Qui peut ouvrir quoi, ajout des personnes et réinitialisation des codes.</p><span class="foot"><span class="pill warn">Admin</span><span class="go">Gérer →</span></span></a>`:"");
+  $("#main").innerHTML=`<div class="screen">
+    <div><h1>Bonjour ${esc(ME.nom)}</h1><p class="lead">Choisissez l'application. Elle s'ouvre directement, sans retaper de code.</p></div>
+    ${ME.secours?`<p class="note" style="color:var(--warn)">Vous êtes entré avec le code de secours. Pensez à vous créer un compte personnel dans Accès.</p>`:""}
+    <div class="tiles">${tuiles}</div>
+    <p class="note">Une tuile grisée veut dire que vous n'avez pas ce droit. Seul un administrateur peut le donner, depuis la page Accès.</p>
+    <p class="credit">Antoine Macé · DSV Angers</p></div>`}
+
+function champsCode(avecActuel){return `${avecActuel?`<label class="field">Code actuel<input id="o" type="password" required autocomplete="current-password"></label>`:""}
+  <label class="field">Nouveau code<input id="n1" type="password" required autocomplete="new-password"></label>
+  <label class="field">Retapez le nouveau code<input id="n2" type="password" required autocomplete="new-password"></label>
+  <ul class="rules"><li>Au moins 10 lettres ou chiffres (les majuscules, espaces et signes ne comptent pas).</li><li>Pas une suite simple comme 1234567890 ou AAAAAAAAAA.</li></ul>
+  <p class="err" id="e" role="alert"></p>`}
+function brancherCode(){$("#fc").onsubmit=async e=>{e.preventDefault();const a=$("#n1").value,b=$("#n2").value;
+  if(a!==b){$("#e").textContent="Les deux codes ne sont pas identiques.";return}
+  const btn=$("#fc button[type=submit]");btn.disabled=true;
+  try{await api("mon-code",{method:"POST",body:JSON.stringify({actuel:$("#o")?.value||"",code:a})});ME.provisoire=false;$("#moncode").hidden=!!ME.secours;location.hash="";toast("Code enregistré. Il sert pour le planning et les véhicules.");route()}
+  catch(x){$("#e").textContent=x.message;btn.disabled=false}}}
+function vuePremier(){$("#main").innerHTML=`<div class="screen narrow">
+  <div><h1>Bienvenue ${esc(ME.nom)}</h1><p class="lead">Vous êtes entré avec un code provisoire. Choisissez votre code personnel : il servira pour le planning et pour les véhicules.</p></div>
+  <form class="card form" id="fc">${champsCode(false)}<div><button class="btn" type="submit">Enregistrer mon code</button></div></form></div>`;brancherCode()}
+function vueCode(){if(ME.secours){$("#main").innerHTML=`<div class="screen narrow"><h1>Code de secours</h1><p class="lead">Le code de secours se change dans les réglages Vercel du portail (CODE_ADMIN).</p><div><a class="btn sec" href="#">Retour</a></div></div>`;return}
+  $("#main").innerHTML=`<div class="screen narrow">
+  <div><h1>Changer mon code</h1><p class="lead">Le nouveau code sert tout de suite pour le planning et pour les véhicules.</p></div>
+  <form class="card form" id="fc">${champsCode(true)}<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" type="submit">Enregistrer</button><a class="btn sec" href="#">Annuler</a></div></form></div>`;brancherCode()}
+
+function vueAide(){$("#main").innerHTML=`<div class="screen">
+  <div class="bar"><div><h1>Les codes, comment ça marche</h1><p class="lead">Un seul code par personne, pour les deux applis. Personne ne peut lire les codes, même pas un administrateur.</p></div><a class="btn sec" href="#">Retour</a></div>
+  <div class="help">
+    <div class="card"><h3>Pour une nouvelle personne</h3><ol class="steps">
+      <li><span>Un administrateur l'ajoute dans <b>Accès</b> et choisit ce qu'elle peut ouvrir.</span></li>
+      <li><span>Le portail affiche un <b>code provisoire</b> une seule fois. L'administrateur le donne de vive voix ou sur papier.</span></li>
+      <li><span>À sa première connexion, la personne choisit <b>son propre code</b>. Le provisoire ne marche plus.</span></li></ol></div>
+    <div class="card"><h3>Au quotidien</h3><ul>
+      <li>On tape son code <b>une fois</b> sur le portail, puis on clique sur la tuile : l'appli s'ouvre sans redemander.</li>
+      <li>Chacun peut changer son code avec <b>Mon code</b>, en haut à droite.</li>
+      <li>Ce que chacun modifie dans le planning est signé de son nom.</li>
+      <li>Après 10 codes faux, il faut attendre quelques minutes.</li></ul></div>
+    <div class="card"><h3>Code oublié</h3><p>On demande à un administrateur. Il clique sur <b>Réinitialiser le code</b> : un nouveau code provisoire s'affiche, et l'ancien ne marche plus. Il ne peut pas retrouver l'ancien, car le portail n'en garde qu'une empreinte chiffrée.</p></div>
+    <div class="card"><h3>Retirer un accès</h3><p>Dans <b>Accès</b>, on passe le droit à « Pas d'accès » ou on clique sur <b>Désactiver</b>. Le portail bloque tout de suite. Une appli déjà ouverte vérifie les droits toutes les 5 minutes et se ferme d'elle-même.</p></div>
+    <div class="card"><h3>Si l'administrateur perd son code</h3><p>Un <b>code de secours</b> est rangé dans les réglages Vercel du portail. Il permet d'entrer comme administrateur et de réinitialiser son code.</p></div>
+  </div></div>`}
+
+function ligne(p){const moi=p.id===ME.id,sel=(app)=>`<select data-f="${app}" data-id="${p.id}" aria-label="${app==="planning"?"Planning":"Véhicules"} de ${esc(p.nom)}" ${p.actif?"":"disabled"}>${NIVEAUX[app].map(k=>`<option value="${k}" ${p[app]===k?"selected":""}>${NIV[k]}</option>`).join("")}</select>`;
+  return `<tr class="${p.actif?"":"inactif"}">
+    <td><span class="nm">${esc(p.nom)}${moi?" (vous)":""}</span><span class="sub">Vu ${esc(quand(p.vu))}</span></td>
+    <td>${sel("planning")}</td><td>${sel("flotte")}</td>
+    <td><label class="chk"><input type="checkbox" data-f="admin" data-id="${p.id}" ${p.admin?"checked":""} ${p.actif&&!moi?"":"disabled"}>Admin</label></td>
+    <td>${!p.actif?'<span class="pill off">Désactivé</span>':p.provisoire?'<span class="pill warn">Provisoire</span><span class="sub">pas encore changé</span>':`<span class="pill ok">Personnel</span><span class="sub">depuis le ${new Date(p.code_le).toLocaleDateString("fr-FR")}</span>`}</td>
+    <td><div class="acts">${p.actif?`<button class="btn sec sm" data-reset="${p.id}">Réinitialiser le code</button>${moi?"":`<button class="btn sec sm" data-off="${p.id}">Désactiver</button>`}`:`<button class="btn sec sm" data-on="${p.id}">Réactiver</button>`}</div></td></tr>`}
+async function vueAcces(){
+  if(!ME.admin){$("#main").innerHTML=`<div class="screen"><h1>Accès réservé</h1><p class="lead">Cette page est réservée aux administrateurs.</p><div><a class="btn sec" href="#">Retour</a></div></div>`;return}
+  let journal=[];try{[PERS,journal]=await Promise.all([api("personnes"),api("journal")])}catch(e){$("#main").innerHTML=`<p class="err">${esc(e.message)}</p>`;return}
+  $("#main").innerHTML=`<div class="screen">
+    <div class="bar"><div><h1>Accès</h1><p class="lead">Un seul code par personne pour les deux applis. Un changement s'applique tout de suite au portail et, dans les applis déjà ouvertes, en 5 minutes au plus.</p></div>
+      <button class="btn" id="addbtn">Ajouter une personne</button></div>
+    <form class="card add" id="addf" hidden>
+      <label class="field">Nom affiché<input id="an" required maxlength="40" placeholder="ex. Julie B."></label>
+      <label class="field">Planning<select id="apl">${NIVEAUX.planning.slice().reverse().map(k=>`<option value="${k}">${NIV[k]}</option>`).join("")}</select></label>
+      <label class="field">Véhicules<select id="afl"><option value="consult">Consultation</option><option value="modif">Modification</option><option value="aucun">Pas d'accès</option></select></label>
+      <label class="chk"><input type="checkbox" id="aad">Administrateur</label>
+      <button class="btn" type="submit">Créer et afficher le code</button>
+    </form>
+    ${PERS.length?`<div class="card tbl-wrap"><table><thead><tr><th>Personne</th><th>Planning journalier</th><th>Gestion des véhicules</th><th>Portail</th><th>Code</th><th></th></tr></thead><tbody>${PERS.map(ligne).join("")}</tbody></table></div>
+    <div class="legend"><span><span class="pill ok">Personnel</span> la personne a choisi son code</span><span><span class="pill warn">Provisoire</span> donné par un admin, à changer à la 1<sup>re</sup> connexion</span><span><span class="pill off">Désactivé</span> ne peut plus entrer, l'historique garde son nom</span></div>`
+    :`<div class="card side"><h3>Personne pour l'instant</h3><p class="note">Commencez par reprendre les personnes du planning (ci-dessous) : chacun gardera le code qu'il utilise déjà. Ajoutez ensuite les autres.</p></div>`}
+    <div class="help">
+      <div class="card side"><h3>Reprendre les personnes du planning</h3><p class="note">Copie les personnes du planning avec leur code actuel : elles n'ont rien à changer. Elles arrivent avec le planning en modification et sans accès aux véhicules. À faire de préférence avant d'ajouter qui que ce soit ici ; on peut relancer plus tard pour récupérer les nouveaux du planning.</p><div><button class="btn sec" id="imp">Reprendre du planning</button></div></div>
+      <div class="card side"><h3>Derniers changements</h3>${journal.length?`<ul class="jr">${journal.slice(0,40).map(j=>`<li><time>${esc(quand(j.t))}</time>${esc(j.qui)} · ${esc(j.texte)}</li>`).join("")}</ul>`:`<p class="note">Rien pour l'instant.</p>`}</div>
+    </div></div>`;
+  $("#addbtn").onclick=()=>{$("#addf").hidden=!$("#addf").hidden;if(!$("#addf").hidden)$("#an").focus()};
+  $("#addf").onsubmit=async e=>{e.preventDefault();const nom=$("#an").value.trim();try{const r=await api("personnes",{method:"POST",body:JSON.stringify({nom,planning:$("#apl").value,flotte:$("#afl").value,admin:$("#aad").checked})});
+    await vueAcces();montrerCode(nom,r.code,"créé")}catch(x){toast(x.message)}};
+  $("#imp").onclick=async()=>{$("#imp").disabled=true;try{const r=await api("import-planning",{method:"POST",body:"{}"});toast(`${r.ajout} personne${r.ajout>1?"s":""} reprise${r.ajout>1?"s":""} du planning`);vueAcces()}catch(x){toast(x.message);$("#imp").disabled=false}};
+  document.querySelectorAll("td select,td input[type=checkbox]").forEach(el=>el.onchange=async()=>{const p=PERS.find(x=>x.id===el.dataset.id),f=el.dataset.f;
+    const v={...p,[f]:f==="admin"?el.checked:el.value};try{await api("personnes/"+p.id,{method:"PUT",body:JSON.stringify(v)});Object.assign(p,v);toast(`Droits de ${p.nom} enregistrés`)}catch(x){toast(x.message);vueAcces()}});
+  document.querySelectorAll("[data-reset]").forEach(b=>b.onclick=()=>{const p=PERS.find(x=>x.id===b.dataset.reset);
+    dialog(`<h3>Réinitialiser le code de ${esc(p.nom)} ?</h3><p>Son code actuel ne marchera plus. Un code provisoire va s'afficher, à lui donner en main propre.</p><div class="acts"><button class="btn sec" id="ann">Annuler</button><button class="btn" id="okr">Réinitialiser</button></div>`);
+    $("#ann").onclick=closeDlg;$("#okr").onclick=async()=>{try{const r=await api("personnes/"+p.id+"/code",{method:"POST",body:"{}"});await vueAcces();montrerCode(p.nom,r.code,"réinitialisé")}catch(x){closeDlg();toast(x.message)}}});
+  document.querySelectorAll("[data-off],[data-on]").forEach(b=>b.onclick=()=>{const on=!!b.dataset.on,p=PERS.find(x=>x.id===(b.dataset.on||b.dataset.off));
+    const go=async()=>{try{await api("personnes/"+p.id,{method:"PUT",body:JSON.stringify({...p,actif:on})});closeDlg();toast(`${p.nom} ${on?"réactivé":"désactivé"}`);vueAcces()}catch(x){closeDlg();toast(x.message)}};
+    if(on)return go();
+    dialog(`<h3>Désactiver ${esc(p.nom)} ?</h3><p>${esc(p.nom)} ne pourra plus entrer dans le portail, et les applis ouvertes se fermeront dans les 5 minutes. Ce qui a été saisi reste signé de son nom. Vous pourrez le réactiver.</p><div class="acts"><button class="btn sec" id="ann">Annuler</button><button class="btn bad" id="okd">Désactiver</button></div>`);
+    $("#ann").onclick=closeDlg;$("#okd").onclick=go})}
+function montrerCode(nom,code,verbe){dialog(`<h3>Code provisoire${nom?" de "+esc(nom):""}</h3><p>Compte ${verbe}. Donnez ce code de vive voix ou sur papier. <b>Il ne sera plus affiché</b> après fermeture.</p><div class="code-big">${esc(code)}</div><p class="note">À sa première connexion, la personne devra choisir son propre code.</p><div class="acts"><button class="btn" id="noted">C'est noté</button></div>`);$("#noted").onclick=closeDlg}
+
+function route(){closeDlg();window.scrollTo(0,0);
+  if(ME.provisoire)return vuePremier();
+  const h=location.hash.slice(1);
+  if(h==="acces")return vueAcces();if(h==="mon-code")return vueCode();if(h==="aide")return vueAide();vueAccueil()}
+window.addEventListener("hashchange",route);
+(async()=>{try{ME=await api("moi")}catch(e){if(ME===null)$("#main").innerHTML=`<p class="err">${esc(e.message)}</p>`;return}
+  $("#ini").textContent=ini(ME.nom);$("#nom").textContent=ME.nom;$("#moncode").hidden=ME.secours||ME.provisoire;
+  const ref=new URLSearchParams(location.search).get("refus");if(ref){history.replaceState(null,"","/"+location.hash);toast(`Pas d'accès à ${ME.apps[ref]?.nom||"cette appli"}. Demandez à un administrateur.`)}
+  route()})();
+</script></body></html>
