@@ -187,7 +187,7 @@ function vueAide(){$("#main").innerHTML=`<div class="screen">
     <div class="card"><h3>Si l'administrateur perd son code</h3><p>Un <b>code de secours</b> est rangé dans les réglages Vercel du portail. Il permet d'entrer comme administrateur et de réinitialiser son code.</p></div>
   </div></div>`}
 
-function ligne(p){const moi=p.id===ME.id,sel=(app)=>`<select data-f="${app}" data-id="${p.id}" aria-label="${app==="planning"?"Planning":"Véhicules"} de ${esc(p.nom)}" ${p.actif?"":"disabled"}>${NIVEAUX[app].map(k=>`<option value="${k}" ${p[app]===k?"selected":""}>${NIV[k]}</option>`).join("")}</select>`;
+function ligne(p){const moi=p.id===ME.id,sel=(app)=>`<select data-f="${app}" data-id="${p.id}" aria-label="${app==="planning"?"Plannings":"Véhicules"} de ${esc(p.nom)}" ${p.actif?"":"disabled"}>${NIVEAUX[app].map(k=>`<option value="${k}" ${p[app]===k?"selected":""}>${NIV[k]}</option>`).join("")}</select>`;
   return `<tr class="${p.actif?"":"inactif"}">
     <td><span class="nm">${esc(p.nom)}${moi?" (vous)":""}</span><span class="sub">Vu ${esc(quand(p.vu))}</span></td>
     <td>${sel("planning")}</td><td>${sel("flotte")}</td>
@@ -202,12 +202,12 @@ async function vueAcces(){
       <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn sec" href="#">← Accueil</a><button class="btn" id="addbtn">Ajouter une personne</button></div></div>
     <form class="card add" id="addf" hidden>
       <label class="field">Nom affiché<input id="an" required maxlength="40" placeholder="ex. Julie B."></label>
-      <label class="field">Planning<select id="apl">${NIVEAUX.planning.slice().reverse().map(k=>`<option value="${k}">${NIV[k]}</option>`).join("")}</select></label>
+      <label class="field">Plannings<select id="apl">${NIVEAUX.planning.slice().reverse().map(k=>`<option value="${k}">${NIV[k]}</option>`).join("")}</select></label>
       <label class="field">Véhicules<select id="afl"><option value="consult">Consultation</option><option value="modif">Modification</option><option value="aucun">Pas d'accès</option></select></label>
       <label class="chk"><input type="checkbox" id="aad">Administrateur</label>
       <button class="btn" type="submit">Créer et afficher le code</button>
     </form>
-    ${PERS.length?`<div class="card tbl-wrap"><table><thead><tr><th>Personne</th><th>Planning</th><th>Gestion des véhicules</th><th>Portail</th><th>Code</th><th></th></tr></thead><tbody>${PERS.map(ligne).join("")}</tbody></table></div>
+    ${PERS.length?`<div class="card tbl-wrap"><table><thead><tr><th>Personne</th><th>Plannings</th><th>Gestion des véhicules</th><th>Portail</th><th>Code</th><th></th></tr></thead><tbody>${PERS.map(ligne).join("")}</tbody></table></div>
     <div class="legend"><span><span class="pill ok">Personnel</span> la personne a choisi son code</span><span><span class="pill warn">Provisoire</span> donné par un admin, à changer à la 1<sup>re</sup> connexion</span><span><span class="pill off">Désactivé</span> ne peut plus entrer, l'historique garde son nom</span></div>`
     :`<div class="card side"><h3>Personne pour l'instant</h3><p class="note">Commencez par reprendre les personnes du planning (ci-dessous) : chacun gardera le code qu'il utilise déjà. Ajoutez ensuite les autres.</p></div>`}
     <div class="help">
