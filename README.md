@@ -14,7 +14,7 @@ Les deux applis gardent leur dépôt, leur adresse et leur base Neon. Le portail
 - **Ouverture d'une appli** : le portail envoie la personne vers l'appli avec un jeton signé (`CLE_PORTAIL`), valable 1 minute et utilisable une seule fois. L'appli ouvre alors sa propre session de 12 h.
 - **Droits** : Plannings (pas d'accès, modification), Véhicules (pas d'accès, consultation, modification), case Administrateur (page Accès, et rôle administrateur dans les applis). Chaque appli redemande au portail toutes les 5 minutes si la session est toujours ouverte et le droit toujours là : un accès retiré, une personne désactivée ou une déconnexion coupent l'appli en 5 minutes au plus. Si le portail ne répond pas, les applis déjà ouvertes continuent.
 - **Code de secours** : `CODE_ADMIN` ouvre le portail en administrateur (premier lancement, ou code perdu).
-- **Reprise du planning** : dans Accès, « Reprendre du planning » copie les personnes du planning avec leurs codes actuels (à faire sur un portail encore vide).
+- **Reprise du planning** : les personnes et leurs codes ont été repris du planning une fois, à la mise en route (le bouton a été retiré ensuite).
 
 ## Mise en ligne (Vercel)
 
@@ -22,7 +22,7 @@ Les deux applis gardent leur dépôt, leur adresse et leur base Neon. Le portail
 2. Onglet Storage : créer une base Neon et la relier au projet (`DATABASE_URL` est ajoutée automatiquement).
 3. Settings > Environment Variables (voir ci-dessous), puis Deployments > Redeploy.
 4. Régler `PORTAIL_URL` et `CLE_PORTAIL` dans les deux applis (voir leur README), puis Redeploy de chacune.
-5. Se connecter au portail avec `CODE_ADMIN`, page Accès : « Reprendre du planning », puis donner les droits Véhicules et ajouter les autres personnes.
+5. Se connecter au portail avec `CODE_ADMIN`, page Accès : ajouter les personnes et leur donner leurs droits.
 
 ## Réglages Vercel (Settings > Environment Variables)
 

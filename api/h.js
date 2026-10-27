@@ -49,7 +49,7 @@ async function init() {
   await q(`INSERT INTO reglages (k, v) VALUES ('poivre', $1) ON CONFLICT (k) DO NOTHING`, [crypto.randomBytes(32).toString("hex")]);
 }
 
-// Codes personnels : gardés sous forme d'empreinte, comme dans le planning (même calcul, pour pouvoir reprendre ses codes).
+// Codes personnels : gardés sous forme d'empreinte, comme dans le planning (même calcul, les codes en ont été repris).
 const normCode = c => String(c || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
 let poivre;
 async function cleDe(code) {
@@ -262,7 +262,7 @@ export default async function handler(req, res) {
     }
 
     // Page Accès : réservée aux administrateurs.
-    if (p === "/personnes" || p.startsWith("/personnes/") || p === "/journal" || p === "/import-planning") {
+    if (p === "/personnes" || p.startsWith("/personnes/") || p === "/journal") {
       if (!ses.admin) return text(res, 403, "Réservé aux administrateurs");
       if (p === "/personnes" && method === "GET") return json(res, 200, (await q(`${PERSONNE} ORDER BY actif DESC, nom`)).rows);
       if (p === "/journal" && method === "GET") return json(res, 200, (await q(`SELECT t, qui, texte FROM journal ORDER BY t DESC, id DESC LIMIT 100`)).rows);
@@ -311,37 +311,6 @@ export default async function handler(req, res) {
           return json(res, 200, { ok: true });
         }
         return text(res, 405, "Méthode non autorisée");
-      }
-      // Reprise des personnes du planning avec leurs codes : chacun garde le code qu'il a déjà.
-      // Possible tant que le portail est vide, ou de nouveau plus tard pour ajouter les personnes créées entre-temps dans le planning.
-      if (p === "/import-planning" && method === "POST") {
-        if (!APPS.planning.url || !CLE_OK) return text(res, 400, "Réglez d'abord PLANNING_URL et CLE_PORTAIL dans Vercel");
-        let r;
-        try {
-          r = await fetch(APPS.planning.url + "/api/portail-personnes", { headers: { Authorization: "Bearer " + CLE_PORTAIL }, signal: AbortSignal.timeout(15000) });
-        } catch (e) { return text(res, 502, "Planning injoignable : vérifiez PLANNING_URL"); }
-        if (!r.ok) return text(res, 502, r.status === 401 || r.status === 404 ? "Le planning refuse : vérifiez que CLE_PORTAIL a la même valeur dans les deux projets, et que la mise à jour du planning est en ligne" : `Le planning répond ${r.status}`);
-        const d = await r.json();
-        if (!/^[0-9a-f]{64}$/.test(String(d.poivre || "")) || !Array.isArray(d.personnes)) return text(res, 502, "Réponse du planning illisible");
-        const n = (await q(`SELECT count(*)::int AS n FROM personnes`)).rows[0].n;
-        const actuel = (await q(`SELECT v FROM reglages WHERE k = 'poivre'`)).rows[0].v;
-        if (n && actuel !== d.poivre) return text(res, 409, "Le portail a déjà des personnes ajoutées à la main : la reprise des codes du planning n'est possible que sur un portail vide. Connectez-vous avec le code de secours, désactivez puis supprimez ces personnes, et relancez la reprise");
-        const client = await db().connect();
-        let ajout = 0;
-        try {
-          await client.query("BEGIN");
-          await client.query(`UPDATE reglages SET v = $1 WHERE k = 'poivre'`, [d.poivre]);
-          for (const x of d.personnes.slice(0, 500)) {
-            if (!/^p[0-9a-f]{10}$/.test(String(x.id)) || !/^[0-9a-f]{64}$/.test(String(x.cle))) continue;
-            const ins = await client.query(`INSERT INTO personnes (id, nom, admin, actif, cle, planning, flotte) VALUES ($1, $2, $3, $4, $5, 'modif', 'aucun') ON CONFLICT DO NOTHING`,
-              [x.id, clean(x.nom, 40) || "?", !!x.admin, x.actif !== false, x.cle]);
-            ajout += ins.rowCount;
-          }
-          await client.query("COMMIT");
-        } catch (e) { await client.query("ROLLBACK"); throw e; } finally { client.release(); }
-        poivre = d.poivre;
-        await log(ses.nom, `Reprise des personnes du planning : ${ajout} ajoutée${ajout > 1 ? "s" : ""}`);
-        return json(res, 200, { ok: true, ajout, total: d.personnes.length });
       }
       return text(res, 405, "Méthode non autorisée");
     }
