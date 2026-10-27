@@ -206,15 +206,13 @@ async function vueAcces(){
     </form>
     ${PERS.length?`<div class="card tbl-wrap"><table><thead><tr><th>Personne</th><th>Planning</th><th>Gestion des véhicules</th><th>Portail</th><th>Code</th><th></th></tr></thead><tbody>${PERS.map(ligne).join("")}</tbody></table></div>
     <div class="legend"><span><span class="pill ok">Personnel</span> la personne a choisi son code</span><span><span class="pill warn">Provisoire</span> donné par un admin, à changer à la 1<sup>re</sup> connexion</span><span><span class="pill off">Désactivé</span> ne peut plus entrer, l'historique garde son nom</span></div>`
-    :`<div class="card side"><h3>Personne pour l'instant</h3><p class="note">Commencez par reprendre les personnes du planning (ci-dessous) : chacun gardera le code qu'il utilise déjà. Ajoutez ensuite les autres.</p></div>`}
+    :`<div class="card side"><h3>Personne pour l'instant</h3><p class="note">Ajoutez une personne avec le bouton ci-dessus : le portail affiche son code provisoire.</p></div>`}
     <div class="help">
-      <div class="card side"><h3>Reprendre les personnes du planning</h3><p class="note">Copie les personnes du planning avec leur code actuel : elles n'ont rien à changer. Elles arrivent avec le planning en modification et sans accès aux véhicules. À faire de préférence avant d'ajouter qui que ce soit ici ; on peut relancer plus tard pour récupérer les nouveaux du planning.</p><div><button class="btn sec" id="imp">Reprendre du planning</button></div></div>
       <div class="card side"><h3>Derniers changements</h3>${journal.length?`<ul class="jr">${journal.slice(0,40).map(j=>`<li><time>${esc(quand(j.t))}</time>${esc(j.qui)} · ${esc(j.texte)}</li>`).join("")}</ul>`:`<p class="note">Rien pour l'instant.</p>`}</div>
     </div></div>`;
   $("#addbtn").onclick=()=>{$("#addf").hidden=!$("#addf").hidden;if(!$("#addf").hidden)$("#an").focus()};
   $("#addf").onsubmit=async e=>{e.preventDefault();const nom=$("#an").value.trim();try{const r=await api("personnes",{method:"POST",body:JSON.stringify({nom,planning:$("#apl").value,flotte:$("#afl").value,admin:$("#aad").checked})});
     await vueAcces();montrerCode(nom,r.code,"créé")}catch(x){toast(x.message)}};
-  $("#imp").onclick=async()=>{$("#imp").disabled=true;try{const r=await api("import-planning",{method:"POST",body:"{}"});toast(`${r.ajout} personne${r.ajout>1?"s":""} reprise${r.ajout>1?"s":""} du planning`);vueAcces()}catch(x){toast(x.message);$("#imp").disabled=false}};
   document.querySelectorAll("td select,td input[type=checkbox]").forEach(el=>el.onchange=async()=>{const p=PERS.find(x=>x.id===el.dataset.id),f=el.dataset.f;
     const v={...p,[f]:f==="admin"?el.checked:el.value};try{await api("personnes/"+p.id,{method:"PUT",body:JSON.stringify(v)});Object.assign(p,v);toast(`Droits de ${p.nom} enregistrés`)}catch(x){toast(x.message);vueAcces()}});
   document.querySelectorAll("[data-reset]").forEach(b=>b.onclick=()=>{const p=PERS.find(x=>x.id===b.dataset.reset);
