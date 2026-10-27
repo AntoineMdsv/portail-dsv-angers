@@ -190,13 +190,13 @@ function ligne(p){const moi=p.id===ME.id,sel=(app)=>`<select data-f="${app}" dat
     <td>${sel("planning")}</td><td>${sel("flotte")}</td>
     <td><label class="chk"><input type="checkbox" data-f="admin" data-id="${p.id}" ${p.admin?"checked":""} ${p.actif&&!moi?"":"disabled"}>Admin</label></td>
     <td>${!p.actif?'<span class="pill off">Désactivé</span>':p.provisoire?'<span class="pill warn">Provisoire</span><span class="sub">pas encore changé</span>':`<span class="pill ok">Personnel</span><span class="sub">depuis le ${new Date(p.code_le).toLocaleDateString("fr-FR")}</span>`}</td>
-    <td><div class="acts">${p.actif?`<button class="btn sec sm" data-reset="${p.id}">Réinitialiser le code</button>${moi?"":`<button class="btn sec sm" data-off="${p.id}">Désactiver</button>`}`:`<button class="btn sec sm" data-on="${p.id}">Réactiver</button>`}</div></td></tr>`}
+    <td><div class="acts">${p.actif?`<button class="btn sec sm" data-reset="${p.id}">Réinitialiser le code</button>${moi?"":`<button class="btn sec sm" data-off="${p.id}">Désactiver</button>`}`:`<button class="btn sec sm" data-on="${p.id}">Réactiver</button><button class="btn sec sm" data-del="${p.id}">Supprimer</button>`}</div></td></tr>`}
 async function vueAcces(){
   if(!ME.admin){$("#main").innerHTML=`<div class="screen"><h1>Accès réservé</h1><p class="lead">Cette page est réservée aux administrateurs.</p><div><a class="btn sec" href="#">Retour</a></div></div>`;return}
   let journal=[];try{[PERS,journal]=await Promise.all([api("personnes"),api("journal")])}catch(e){$("#main").innerHTML=`<p class="err">${esc(e.message)}</p>`;return}
   $("#main").innerHTML=`<div class="screen">
     <div class="bar"><div><h1>Accès</h1><p class="lead">Un seul code par personne pour les deux applis. Un changement s'applique tout de suite au portail et, dans les applis déjà ouvertes, en 5 minutes au plus.</p></div>
-      <button class="btn" id="addbtn">Ajouter une personne</button></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn sec" href="#">← Accueil</a><button class="btn" id="addbtn">Ajouter une personne</button></div></div>
     <form class="card add" id="addf" hidden>
       <label class="field">Nom affiché<input id="an" required maxlength="40" placeholder="ex. Julie B."></label>
       <label class="field">Planning<select id="apl">${NIVEAUX.planning.slice().reverse().map(k=>`<option value="${k}">${NIV[k]}</option>`).join("")}</select></label>
@@ -224,7 +224,11 @@ async function vueAcces(){
     const go=async()=>{try{await api("personnes/"+p.id,{method:"PUT",body:JSON.stringify({...p,actif:on})});closeDlg();toast(`${p.nom} ${on?"réactivé":"désactivé"}`);vueAcces()}catch(x){closeDlg();toast(x.message)}};
     if(on)return go();
     dialog(`<h3>Désactiver ${esc(p.nom)} ?</h3><p>${esc(p.nom)} ne pourra plus entrer dans le portail, et les applis ouvertes se fermeront dans les 5 minutes. Ce qui a été saisi reste signé de son nom. Vous pourrez le réactiver.</p><div class="acts"><button class="btn sec" id="ann">Annuler</button><button class="btn bad" id="okd">Désactiver</button></div>`);
-    $("#ann").onclick=closeDlg;$("#okd").onclick=go})}
+    $("#ann").onclick=closeDlg;$("#okd").onclick=go});
+  brancherSuppr()}
+function brancherSuppr(){document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{const p=PERS.find(x=>x.id===b.dataset.del);
+  dialog(`<h3>Supprimer ${esc(p.nom)} ?</h3><p>La personne disparaît du portail. Ce qu'elle a saisi dans les applis reste signé de son nom.</p><div class="acts"><button class="btn sec" id="ann">Annuler</button><button class="btn bad" id="oks">Supprimer</button></div>`);
+  $("#ann").onclick=closeDlg;$("#oks").onclick=async()=>{try{await api("personnes/"+p.id,{method:"DELETE"});closeDlg();toast(`${p.nom} supprimé`);vueAcces()}catch(x){closeDlg();toast(x.message)}}})}
 function montrerCode(nom,code,verbe){dialog(`<h3>Code provisoire${nom?" de "+esc(nom):""}</h3><p>Compte ${verbe}. Donnez ce code de vive voix ou sur papier. <b>Il ne sera plus affiché</b> après fermeture.</p><div class="code-big">${esc(code)}</div><p class="note">À sa première connexion, la personne devra choisir son propre code.</p><div class="acts"><button class="btn" id="noted">C'est noté</button></div>`);$("#noted").onclick=closeDlg}
 
 function route(){closeDlg();window.scrollTo(0,0);

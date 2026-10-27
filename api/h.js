@@ -295,6 +295,15 @@ export default async function handler(req, res) {
           if (ch.length) await log(ses.nom, `${pr.nom} : ${ch.join(", ")}`);
           return json(res, 200, { ok: true });
         }
+        // Supprimer : seulement une personne déjà désactivée, et jamais soi-même.
+        if (!m[2] && method === "DELETE") {
+          if (m[1] === ses.id) return text(res, 400, "Vous ne pouvez pas vous supprimer vous-même");
+          if (pr.actif) return text(res, 400, "Désactivez d'abord cette personne");
+          await q(`DELETE FROM sessions WHERE pid = $1`, [m[1]]);
+          await q(`DELETE FROM personnes WHERE id = $1`, [m[1]]);
+          await log(ses.nom, `${pr.nom} supprimé`);
+          return json(res, 200, { ok: true });
+        }
         return text(res, 405, "Méthode non autorisée");
       }
       // Reprise des personnes du planning avec leurs codes : chacun garde le code qu'il a déjà.
@@ -310,7 +319,7 @@ export default async function handler(req, res) {
         if (!/^[0-9a-f]{64}$/.test(String(d.poivre || "")) || !Array.isArray(d.personnes)) return text(res, 502, "Réponse du planning illisible");
         const n = (await q(`SELECT count(*)::int AS n FROM personnes`)).rows[0].n;
         const actuel = (await q(`SELECT v FROM reglages WHERE k = 'poivre'`)).rows[0].v;
-        if (n && actuel !== d.poivre) return text(res, 409, "Le portail a déjà des personnes avec ses propres codes : la reprise des codes du planning n'est possible que sur un portail vide");
+        if (n && actuel !== d.poivre) return text(res, 409, "Le portail a déjà des personnes ajoutées à la main : la reprise des codes du planning n'est possible que sur un portail vide. Connectez-vous avec le code de secours, désactivez puis supprimez ces personnes, et relancez la reprise");
         const client = await db().connect();
         let ajout = 0;
         try {
