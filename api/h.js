@@ -36,13 +36,16 @@ const q = (text, params) => db().query(text, params);
 
 let ready;
 async function init() {
-  await q(`CREATE TABLE IF NOT EXISTS personnes (id text PRIMARY KEY, nom text NOT NULL, admin boolean NOT NULL DEFAULT false, actif boolean NOT NULL DEFAULT true,
+  // Toutes les créations de tables en un seul aller-retour vers la base (démarrage à froid plus court).
+  await q([
+    `CREATE TABLE IF NOT EXISTS personnes (id text PRIMARY KEY, nom text NOT NULL, admin boolean NOT NULL DEFAULT false, actif boolean NOT NULL DEFAULT true,
     cle text NOT NULL UNIQUE, provisoire boolean NOT NULL DEFAULT false, planning text NOT NULL DEFAULT 'aucun', flotte text NOT NULL DEFAULT 'aucun',
-    code_le timestamptz NOT NULL DEFAULT now(), vu timestamptz, cree timestamptz NOT NULL DEFAULT now())`);
-  await q(`CREATE TABLE IF NOT EXISTS sessions (sid text PRIMARY KEY, pid text NOT NULL, exp timestamptz NOT NULL, fin boolean NOT NULL DEFAULT false)`);
-  await q(`CREATE TABLE IF NOT EXISTS echecs (ip text NOT NULL, t timestamptz NOT NULL DEFAULT now())`);
-  await q(`CREATE TABLE IF NOT EXISTS reglages (k text PRIMARY KEY, v text NOT NULL)`);
-  await q(`CREATE TABLE IF NOT EXISTS journal (id bigserial PRIMARY KEY, t timestamptz NOT NULL DEFAULT now(), qui text NOT NULL, texte text NOT NULL)`);
+    code_le timestamptz NOT NULL DEFAULT now(), vu timestamptz, cree timestamptz NOT NULL DEFAULT now())`,
+    `CREATE TABLE IF NOT EXISTS sessions (sid text PRIMARY KEY, pid text NOT NULL, exp timestamptz NOT NULL, fin boolean NOT NULL DEFAULT false)`,
+    `CREATE TABLE IF NOT EXISTS echecs (ip text NOT NULL, t timestamptz NOT NULL DEFAULT now())`,
+    `CREATE TABLE IF NOT EXISTS reglages (k text PRIMARY KEY, v text NOT NULL)`,
+    `CREATE TABLE IF NOT EXISTS journal (id bigserial PRIMARY KEY, t timestamptz NOT NULL DEFAULT now(), qui text NOT NULL, texte text NOT NULL)`
+  ].join(";\n"));
   await q(`INSERT INTO reglages (k, v) VALUES ('poivre', $1) ON CONFLICT (k) DO NOTHING`, [crypto.randomBytes(32).toString("hex")]);
 }
 
@@ -88,11 +91,14 @@ async function ouvrirSession(pid) {
 const ADMIN_SECOURS = () => ({ id: "admin", nom: NOM_ADMIN, admin: true, actif: true, provisoire: false, planning: "modif", flotte: "modif", secours: true });
 // La personne est relue à chaque appel : un accès retiré ou une session terminée coupe tout de suite.
 async function sessionDe(sid) {
-  const s = (await q(`SELECT pid FROM sessions WHERE sid = $1 AND NOT fin AND exp > now()`, [sid])).rows[0];
+  // Session et personne lues en une seule requête.
+  const s = (await q(`SELECT s.pid, p.id, p.nom, p.admin, p.provisoire, p.planning, p.flotte FROM sessions s
+    LEFT JOIN personnes p ON p.id = s.pid AND p.actif WHERE s.sid = $1 AND NOT s.fin AND s.exp > now()`, [sid])).rows[0];
   if (!s) return null;
   if (s.pid === "admin") return CODE_ADMIN.length >= MIN_CODE ? { ...ADMIN_SECOURS(), sid } : null;
-  const p = (await q(`SELECT id, nom, admin, provisoire, planning, flotte FROM personnes WHERE id = $1 AND actif`, [s.pid])).rows[0];
-  return p ? { ...p, sid } : null;
+  if (!s.id) return null;
+  const { pid, ...p } = s;
+  return { ...p, sid };
 }
 async function session(req) {
   const m = /(?:^|;\s*)portail=([^;]+)/.exec(req.headers.cookie || "");
@@ -224,7 +230,7 @@ export default async function handler(req, res) {
     if (p === "/page") return page(res, "pages/index.html");
     if (p === "/moi" && method === "GET")
       return json(res, 200, { id: ses.id, nom: ses.nom, admin: !!ses.admin, provisoire: ses.provisoire, secours: !!ses.secours, planning: ses.planning, flotte: ses.flotte,
-        apps: Object.fromEntries(Object.entries(APPS).map(([k, a]) => [k, { nom: a.nom, pret: !!(a.url && CLE_OK) }])) });
+        apps: Object.fromEntries(Object.entries(APPS).map(([k, a]) => [k, { nom: a.nom, pret: !!(a.url && CLE_OK), url: a.url && CLE_OK ? a.url : "" }])) });
 
     // Changer son propre code. Avec un code provisoire, on vient de le taper : pas besoin de le redonner.
     if (p === "/mon-code" && method === "POST") {
