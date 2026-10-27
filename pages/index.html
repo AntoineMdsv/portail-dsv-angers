@@ -132,7 +132,7 @@ const ICON={
   cle:'<svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3M14 9l2 2"/></svg>',
   cadenas:'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>'
 };
-const DESC={planning:"Feuille de présence du jour, tournées, conducteurs et planning hebdo.",flotte:"Flotte, réparations, contrôles et véhicules relais."};
+const DESC={planning:"Planning journalier, feuille de présence, tournées et planning hebdo.",flotte:"Flotte, réparations, contrôles et véhicules relais."};
 
 function vueAccueil(){
   const tuiles=["planning","flotte"].map(k=>{const a=ME.apps[k],lv=ME[k],ok=lv!=="aucun"&&a.pret;
@@ -204,7 +204,7 @@ async function vueAcces(){
       <label class="chk"><input type="checkbox" id="aad">Administrateur</label>
       <button class="btn" type="submit">Créer et afficher le code</button>
     </form>
-    ${PERS.length?`<div class="card tbl-wrap"><table><thead><tr><th>Personne</th><th>Planning journalier</th><th>Gestion des véhicules</th><th>Portail</th><th>Code</th><th></th></tr></thead><tbody>${PERS.map(ligne).join("")}</tbody></table></div>
+    ${PERS.length?`<div class="card tbl-wrap"><table><thead><tr><th>Personne</th><th>Planning</th><th>Gestion des véhicules</th><th>Portail</th><th>Code</th><th></th></tr></thead><tbody>${PERS.map(ligne).join("")}</tbody></table></div>
     <div class="legend"><span><span class="pill ok">Personnel</span> la personne a choisi son code</span><span><span class="pill warn">Provisoire</span> donné par un admin, à changer à la 1<sup>re</sup> connexion</span><span><span class="pill off">Désactivé</span> ne peut plus entrer, l'historique garde son nom</span></div>`
     :`<div class="card side"><h3>Personne pour l'instant</h3><p class="note">Commencez par reprendre les personnes du planning (ci-dessous) : chacun gardera le code qu'il utilise déjà. Ajoutez ensuite les autres.</p></div>`}
     <div class="help">

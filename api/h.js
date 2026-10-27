@@ -21,7 +21,7 @@ const CLE_PORTAIL = process.env.CLE_PORTAIL || "";
 const CLE_OK = CLE_PORTAIL.length >= 32;
 const url_ = v => String(v || "").trim().replace(/\/+$/, "");
 const APPS = {
-  planning: { nom: "Planning journalier", url: url_(process.env.PLANNING_URL), niveaux: ["aucun", "modif"] },
+  planning: { nom: "Planning", url: url_(process.env.PLANNING_URL), niveaux: ["aucun", "modif"] },
   flotte: { nom: "Gestion des véhicules", url: url_(process.env.FLOTTE_URL), niveaux: ["aucun", "consult", "modif"] }
 };
 const NIVEAU_NOM = { aucun: "pas d'accès", consult: "consultation", modif: "modification" };
