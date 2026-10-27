@@ -97,7 +97,10 @@ td .acts{display:flex;gap:6px;flex-wrap:wrap}
 .steps li{counter-increment:s;display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start}
 .steps li::before{content:counter(s);width:26px;height:26px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;z-index:30;max-width:calc(100% - 32px)}
-.credit{text-align:center;font-size:11px;opacity:.55;margin:24px 0 0}
+/* Crédit collé en bas de la fenêtre, sous le contenu quand la page est longue. */
+body{display:flex;flex-direction:column;min-height:100vh}
+main{flex:1 0 auto;width:100%}
+.credit{text-align:center;font-size:11px;opacity:.55;padding-block:12px calc(12px + env(safe-area-inset-bottom,0px))}
 @media (prefers-reduced-motion:reduce){.tile{transition:none}.tile:hover{transform:none}}
 @media (max-width:560px){.who .nm{display:none}.brand{font-size:17px}}
 </style><style id="nozoom">html{-webkit-text-size-adjust:100%;text-size-adjust:100%}@media (pointer:coarse),(max-width:900px){input,select,textarea{font-size:16px!important}}</style>
@@ -107,6 +110,7 @@ td .acts{display:flex;gap:6px;flex-wrap:wrap}
   <div class="who"><span class="ini" id="ini">?</span><span class="nm" id="nom"></span><a href="#mon-code" id="moncode" hidden>Mon code</a><a href="#aide">Aide</a><a href="/api/logout">Déconnexion</a></div>
 </div></header>
 <main class="wrap" id="main"><p class="note">Chargement…</p></main>
+<footer class="credit">Antoine Macé · DSV Angers</footer>
 <div id="layer"></div>
 <script>
 const $=s=>document.querySelector(s);
@@ -146,8 +150,7 @@ function vueAccueil(){
     <div><h1>Bonjour ${esc(ME.nom)}</h1><p class="lead">Choisissez l'application. Elle s'ouvre directement, sans retaper de code.</p></div>
     ${ME.secours?`<p class="note" style="color:var(--warn)">Vous êtes entré avec le code de secours. Pensez à vous créer un compte personnel dans Accès.</p>`:""}
     <div class="tiles">${tuiles}</div>
-    <p class="note">Une tuile grisée veut dire que vous n'avez pas ce droit. Seul un administrateur peut le donner, depuis la page Accès.</p>
-    <p class="credit">Antoine Macé · DSV Angers</p></div>`}
+    <p class="note">Une tuile grisée veut dire que vous n'avez pas ce droit. Seul un administrateur peut le donner, depuis la page Accès.</p></div>`}
 
 function champsCode(avecActuel){return `${avecActuel?`<label class="field">Code actuel<input id="o" type="password" required autocomplete="current-password"></label>`:""}
   <label class="field">Nouveau code<input id="n1" type="password" required autocomplete="new-password"></label>
