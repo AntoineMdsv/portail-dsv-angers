@@ -116,7 +116,8 @@ main{flex:1 0 auto;width:100%}
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const NIV={aucun:"Pas d'accès",consult:"Consultation",modif:"Modification"};
-const NIVEAUX={planning:["aucun","modif"],flotte:["aucun","consult","modif"]};
+const NIVEAUX={planning:["aucun","modif"],flotte:["aucun","consult","modif"],creneaux:["aucun","consult","modif"]};
+const APPS=["planning","flotte","creneaux"],COURT={planning:"Plannings",flotte:"Véhicules",creneaux:"Créneaux"};
 let ME=null,PERS=[];
 async function api(p,o={}){const r=await fetch("/api/"+p,{cache:"no-store",...o,headers:{"Content-Type":"application/json",...(o.headers||{})}});
   if(r.status===401){location.replace("/connexion");throw new Error("Connexion requise")}
@@ -133,13 +134,14 @@ const quand=t=>{if(!t)return "jamais";const d=new Date(t),j=new Date();const h=d
 const ICON={
   planning:'<svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M7 13.5h3M14 13.5h3M7 17h3"/></svg>',
   flotte:'<svg viewBox="0 0 24 24"><path d="M2 6h11v10H2zM13 9.5h4.5L21 13v3h-8z"/><circle cx="6" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></svg>',
+  creneaux:'<svg viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="3.2"/><path d="M12 8.6V10l1 .8"/></svg>',
   cle:'<svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3M14 9l2 2"/></svg>',
   cadenas:'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>'
 };
-const DESC={planning:"Planning journalier, feuille de présence, tournées et planning hebdo.",flotte:"Flotte, réparations, contrôles et véhicules relais."};
+const DESC={planning:"Planning journalier, feuille de présence, tournées et planning hebdo.",flotte:"Flotte, réparations, contrôles et véhicules relais.",creneaux:"Horaires de livraison par ville et par tournée, avec la carte."};
 
 function vueAccueil(){
-  const tuiles=["planning","flotte"].map(k=>{const a=ME.apps[k],lv=ME[k],ok=lv!=="aucun"&&a.pret;
+  const tuiles=APPS.map(k=>{const a=ME.apps[k],lv=ME[k],ok=lv!=="aucun"&&a.pret;
     const foot=lv==="aucun"?`<span class="pill off">${ICON.cadenas} Pas d'accès</span><span class="note">Demandez à un administrateur</span>`
       :!a.pret?`<span class="pill off">Pas encore relié</span><span class="note">Réglage Vercel à faire</span>`
       :`<span class="pill ${lv==="consult"?"info":"ok"}">${NIV[lv]}</span><span class="go">Ouvrir →</span>`;
@@ -160,18 +162,18 @@ function champsCode(avecActuel){return `${avecActuel?`<label class="field">Code 
 function brancherCode(){$("#fc").onsubmit=async e=>{e.preventDefault();const a=$("#n1").value,b=$("#n2").value;
   if(a!==b){$("#e").textContent="Les deux codes ne sont pas identiques.";return}
   const btn=$("#fc button[type=submit]");btn.disabled=true;
-  try{await api("mon-code",{method:"POST",body:JSON.stringify({actuel:$("#o")?.value||"",code:a})});ME.provisoire=false;$("#moncode").hidden=!!ME.secours;location.hash="";toast("Code enregistré. Il sert pour le planning et les véhicules.");route()}
+  try{await api("mon-code",{method:"POST",body:JSON.stringify({actuel:$("#o")?.value||"",code:a})});ME.provisoire=false;$("#moncode").hidden=!!ME.secours;location.hash="";toast("Code enregistré. Il sert pour toutes les applis.");route()}
   catch(x){$("#e").textContent=x.message;btn.disabled=false}}}
 function vuePremier(){$("#main").innerHTML=`<div class="screen narrow">
-  <div><h1>Bienvenue ${esc(ME.nom)}</h1><p class="lead">Vous êtes entré avec un code provisoire. Choisissez votre code personnel : il servira pour le planning et pour les véhicules.</p></div>
+  <div><h1>Bienvenue ${esc(ME.nom)}</h1><p class="lead">Vous êtes entré avec un code provisoire. Choisissez votre code personnel : il servira pour toutes les applis.</p></div>
   <form class="card form" id="fc">${champsCode(false)}<div><button class="btn" type="submit">Enregistrer mon code</button></div></form></div>`;brancherCode()}
 function vueCode(){if(ME.secours){$("#main").innerHTML=`<div class="screen narrow"><h1>Code de secours</h1><p class="lead">Le code de secours se change dans les réglages Vercel du portail (CODE_ADMIN).</p><div><a class="btn sec" href="#">Retour</a></div></div>`;return}
   $("#main").innerHTML=`<div class="screen narrow">
-  <div><h1>Changer mon code</h1><p class="lead">Le nouveau code sert tout de suite pour le planning et pour les véhicules.</p></div>
+  <div><h1>Changer mon code</h1><p class="lead">Le nouveau code sert tout de suite pour toutes les applis.</p></div>
   <form class="card form" id="fc">${champsCode(true)}<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" type="submit">Enregistrer</button><a class="btn sec" href="#">Annuler</a></div></form></div>`;brancherCode()}
 
 function vueAide(){$("#main").innerHTML=`<div class="screen">
-  <div class="bar"><div><h1>Les codes, comment ça marche</h1><p class="lead">Un seul code par personne, pour les deux applis. Personne ne peut lire les codes, même pas un administrateur.</p></div><a class="btn sec" href="#">Retour</a></div>
+  <div class="bar"><div><h1>Les codes, comment ça marche</h1><p class="lead">Un seul code par personne, pour toutes les applis. Personne ne peut lire les codes, même pas un administrateur.</p></div><a class="btn sec" href="#">Retour</a></div>
   <div class="help">
     <div class="card"><h3>Pour une nouvelle personne</h3><ol class="steps">
       <li><span>Un administrateur l'ajoute dans <b>Accès</b> et choisit ce qu'elle peut ouvrir.</span></li>
@@ -187,10 +189,10 @@ function vueAide(){$("#main").innerHTML=`<div class="screen">
     <div class="card"><h3>Si l'administrateur perd son code</h3><p>Un <b>code de secours</b> est rangé dans les réglages Vercel du portail. Il permet d'entrer comme administrateur et de réinitialiser son code.</p></div>
   </div></div>`}
 
-function ligne(p){const moi=p.id===ME.id,sel=(app)=>`<select data-f="${app}" data-id="${p.id}" aria-label="${app==="planning"?"Plannings":"Véhicules"} de ${esc(p.nom)}" ${p.actif?"":"disabled"}>${NIVEAUX[app].map(k=>`<option value="${k}" ${p[app]===k?"selected":""}>${NIV[k]}</option>`).join("")}</select>`;
+function ligne(p){const moi=p.id===ME.id,sel=(app)=>`<select data-f="${app}" data-id="${p.id}" aria-label="${COURT[app]} de ${esc(p.nom)}" ${p.actif?"":"disabled"}>${NIVEAUX[app].map(k=>`<option value="${k}" ${p[app]===k?"selected":""}>${NIV[k]}</option>`).join("")}</select>`;
   return `<tr class="${p.actif?"":"inactif"}">
     <td><span class="nm">${esc(p.nom)}${moi?" (vous)":""}</span><span class="sub">Vu ${esc(quand(p.vu))}</span></td>
-    <td>${sel("planning")}</td><td>${sel("flotte")}</td>
+    <td>${sel("planning")}</td><td>${sel("flotte")}</td><td>${sel("creneaux")}</td>
     <td><label class="chk"><input type="checkbox" data-f="admin" data-id="${p.id}" ${p.admin?"checked":""} ${p.actif&&!moi?"":"disabled"}>Admin</label></td>
     <td>${!p.actif?'<span class="pill off">Désactivé</span>':p.provisoire?'<span class="pill warn">Provisoire</span><span class="sub">pas encore changé</span>':`<span class="pill ok">Personnel</span><span class="sub">depuis le ${new Date(p.code_le).toLocaleDateString("fr-FR")}</span>`}</td>
     <td><div class="acts">${p.actif?`<button class="btn sec sm" data-reset="${p.id}">Réinitialiser le code</button>${moi?"":`<button class="btn sec sm" data-off="${p.id}">Désactiver</button>`}`:`<button class="btn sec sm" data-on="${p.id}">Réactiver</button><button class="btn sec sm" data-del="${p.id}">Supprimer</button>`}</div></td></tr>`}
@@ -198,23 +200,24 @@ async function vueAcces(){
   if(!ME.admin){$("#main").innerHTML=`<div class="screen"><h1>Accès réservé</h1><p class="lead">Cette page est réservée aux administrateurs.</p><div><a class="btn sec" href="#">Retour</a></div></div>`;return}
   let journal=[];try{[PERS,journal]=await Promise.all([api("personnes"),api("journal")])}catch(e){$("#main").innerHTML=`<p class="err">${esc(e.message)}</p>`;return}
   $("#main").innerHTML=`<div class="screen">
-    <div class="bar"><div><h1>Accès</h1><p class="lead">Un seul code par personne pour les deux applis. Un changement s'applique tout de suite au portail et, dans les applis déjà ouvertes, en 5 minutes au plus.</p></div>
+    <div class="bar"><div><h1>Accès</h1><p class="lead">Un seul code par personne pour toutes les applis. Un changement s'applique tout de suite au portail et, dans les applis déjà ouvertes, en 5 minutes au plus.</p></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn sec" href="#">← Accueil</a><button class="btn" id="addbtn">Ajouter une personne</button></div></div>
     <form class="card add" id="addf" hidden>
       <label class="field">Nom affiché<input id="an" required maxlength="40" placeholder="ex. Julie B."></label>
       <label class="field">Plannings<select id="apl">${NIVEAUX.planning.slice().reverse().map(k=>`<option value="${k}">${NIV[k]}</option>`).join("")}</select></label>
       <label class="field">Véhicules<select id="afl"><option value="consult">Consultation</option><option value="modif">Modification</option><option value="aucun">Pas d'accès</option></select></label>
+      <label class="field">Créneaux<select id="acr"><option value="consult">Consultation</option><option value="modif">Modification</option><option value="aucun">Pas d'accès</option></select></label>
       <label class="chk"><input type="checkbox" id="aad">Administrateur</label>
       <button class="btn" type="submit">Créer et afficher le code</button>
     </form>
-    ${PERS.length?`<div class="card tbl-wrap"><table><thead><tr><th>Personne</th><th>Plannings</th><th>Gestion des véhicules</th><th>Portail</th><th>Code</th><th></th></tr></thead><tbody>${PERS.map(ligne).join("")}</tbody></table></div>
+    ${PERS.length?`<div class="card tbl-wrap"><table><thead><tr><th>Personne</th><th>Plannings</th><th>Gestion des véhicules</th><th>Créneaux</th><th>Portail</th><th>Code</th><th></th></tr></thead><tbody>${PERS.map(ligne).join("")}</tbody></table></div>
     <div class="legend"><span><span class="pill ok">Personnel</span> la personne a choisi son code</span><span><span class="pill warn">Provisoire</span> donné par un admin, à changer à la 1<sup>re</sup> connexion</span><span><span class="pill off">Désactivé</span> ne peut plus entrer, l'historique garde son nom</span></div>`
     :`<div class="card side"><h3>Personne pour l'instant</h3><p class="note">Ajoutez une personne avec le bouton ci-dessus : le portail affiche son code provisoire.</p></div>`}
     <div class="help">
       <div class="card side"><h3>Derniers changements</h3>${journal.length?`<ul class="jr">${journal.slice(0,40).map(j=>`<li><time>${esc(quand(j.t))}</time>${esc(j.qui)} · ${esc(j.texte)}</li>`).join("")}</ul>`:`<p class="note">Rien pour l'instant.</p>`}</div>
     </div></div>`;
   $("#addbtn").onclick=()=>{$("#addf").hidden=!$("#addf").hidden;if(!$("#addf").hidden)$("#an").focus()};
-  $("#addf").onsubmit=async e=>{e.preventDefault();const nom=$("#an").value.trim();try{const r=await api("personnes",{method:"POST",body:JSON.stringify({nom,planning:$("#apl").value,flotte:$("#afl").value,admin:$("#aad").checked})});
+  $("#addf").onsubmit=async e=>{e.preventDefault();const nom=$("#an").value.trim();try{const r=await api("personnes",{method:"POST",body:JSON.stringify({nom,planning:$("#apl").value,flotte:$("#afl").value,creneaux:$("#acr").value,admin:$("#aad").checked})});
     await vueAcces();montrerCode(nom,r.code,"créé")}catch(x){toast(x.message)}};
   document.querySelectorAll("td select,td input[type=checkbox]").forEach(el=>el.onchange=async()=>{const p=PERS.find(x=>x.id===el.dataset.id),f=el.dataset.f;
     const v={...p,[f]:f==="admin"?el.checked:el.value};try{await api("personnes/"+p.id,{method:"PUT",body:JSON.stringify(v)});Object.assign(p,v);toast(`Droits de ${p.nom} enregistrés`)}catch(x){toast(x.message);vueAcces()}});
@@ -239,7 +242,7 @@ function route(){closeDlg();window.scrollTo(0,0);
 window.addEventListener("hashchange",route);
 (async()=>{try{ME=await api("moi")}catch(e){if(ME===null)$("#main").innerHTML=`<p class="err">${esc(e.message)}</p>`;return}
   // Applis autorisées : connexion ouverte d'avance et appli réveillée (fonction et base), pour que la tuile s'ouvre vite.
-  for(const k of ["planning","flotte"]){const u=ME.apps[k]?.url;if(!u||ME[k]==="aucun"||ME.provisoire)continue;
+  for(const k of APPS){const u=ME.apps[k]?.url;if(!u||ME[k]==="aucun"||ME.provisoire)continue;
     try{const l=document.createElement("link");l.rel="preconnect";l.href=u;document.head.appendChild(l);fetch(u+"/api/health",{mode:"no-cors",cache:"no-store"}).catch(()=>{})}catch(_){}}
   $("#ini").textContent=ini(ME.nom);$("#nom").textContent=ME.nom;$("#moncode").hidden=ME.secours||ME.provisoire;
   const ref=new URLSearchParams(location.search).get("refus");if(ref){history.replaceState(null,"","/"+location.hash);toast(`Pas d'accès à ${ME.apps[ref]?.nom||"cette appli"}. Demandez à un administrateur.`)}
