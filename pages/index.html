@@ -112,6 +112,20 @@ main{flex:1 0 auto;width:100%}
 <main class="wrap" id="main"><p class="note">Chargement…</p></main>
 <footer class="credit">Antoine Macé · DSV Angers</footer>
 <div id="layer"></div>
+<!-- Écran d'attente : affiché dès le clic qui ouvre une autre page (tuile, Menu, Déconnexion), pour montrer que le clic est pris en compte. -->
+<div id="attente" hidden role="status" aria-live="polite"><div class="att-box"><span class="att-rond" aria-hidden="true"></span><span id="attente-txt">Chargement…</span></div></div>
+<style>#attente{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:rgb(243 245 248 / .78);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);animation:att-in .12s ease-out}
+#attente[hidden]{display:none}
+.att-box{display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);background:#fff;border:1px solid #d5dbe5;border-radius:10px;padding:16px 22px;box-shadow:0 10px 30px rgb(15 42 92 / .14);font:600 15px "Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;color:#0f2a5c}
+.att-rond{flex:none;width:22px;height:22px;border-radius:50%;border:3px solid #d5dbe5;border-top-color:#2F80D8;animation:att-tour .8s linear infinite}
+@keyframes att-tour{to{transform:rotate(360deg)}}@keyframes att-in{from{opacity:0}}
+@media (prefers-reduced-motion:reduce){.att-rond{animation-duration:2.4s}#attente{animation:none}}</style>
+<script>let attenteT;function attente(t){const a=document.getElementById("attente");document.getElementById("attente-txt").textContent=t||"Chargement…";a.hidden=false;clearTimeout(attenteT);attenteT=setTimeout(()=>{a.hidden=true},30000)}
+function finAttente(){clearTimeout(attenteT);document.getElementById("attente").hidden=true}
+addEventListener("pageshow",e=>{if(e.persisted)finAttente()});
+// Portail : une tuile ouvre une appli, Déconnexion ferme la session ; un clic avec Ctrl ou Cmd (nouvel onglet) n'affiche rien.
+document.addEventListener("click",e=>{const a=e.target.closest("a[href]");if(!a||e.defaultPrevented||e.button||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey||a.target)return;const h=a.getAttribute("href");
+  if(h.startsWith("/api/ouvrir"))attente("Ouverture de "+(a.querySelector("h2")?.textContent||"l'appli")+"…");else if(h==="/api/logout")attente("Déconnexion…")});</script>
 <script>
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
