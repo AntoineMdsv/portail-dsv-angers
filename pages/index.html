@@ -50,7 +50,6 @@ main{padding-block:28px 48px}
 .tile .ic{width:48px;height:48px;border-radius:10px;background:var(--navy);color:#fff;display:grid;place-items:center}
 .tile .ic svg{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .tile h2{font-size:24px}
-.tile p{margin:0;color:var(--muted);font-size:14px}
 .tile .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .tile .go{font-weight:600;color:var(--accent);font-size:14px}
 .tile.off{cursor:not-allowed;background:var(--surface2)}
@@ -152,21 +151,19 @@ const ICON={
   cle:'<svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3M14 9l2 2"/></svg>',
   cadenas:'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>'
 };
-const DESC={planning:"Planning journalier, feuille de présence, tournées et planning hebdo.",flotte:"Flotte, réparations, contrôles et véhicules relais.",creneaux:"Horaires de livraison par ville et par tournée, avec la carte."};
 
 function vueAccueil(){
   const tuiles=APPS.map(k=>{const a=ME.apps[k],lv=ME[k],ok=lv!=="aucun"&&a.pret;
     const foot=lv==="aucun"?`<span class="pill off">${ICON.cadenas} Pas d'accès</span><span class="note">Demandez à un administrateur</span>`
       :!a.pret?`<span class="pill off">Pas encore relié</span><span class="note">Réglage Vercel à faire</span>`
       :`<span class="pill ${lv==="consult"?"info":"ok"}">${NIV[lv]}</span><span class="go">Ouvrir →</span>`;
-    return ok?`<a class="tile" href="/api/ouvrir?app=${k}"><span class="ic">${ICON[k]}</span><h2>${esc(a.nom)}</h2><p>${DESC[k]}</p><span class="foot">${foot}</span></a>`
-      :`<div class="tile off" aria-disabled="true"><span class="ic">${ICON[k]}</span><h2>${esc(a.nom)}</h2><p>${DESC[k]}</p><span class="foot">${foot}</span></div>`}).join("")
-    +(ME.admin?`<a class="tile admin" href="#acces"><span class="ic">${ICON.cle}</span><h2>Accès</h2><p>Qui peut ouvrir quoi, ajout des personnes et réinitialisation des codes.</p><span class="foot"><span class="pill warn">Admin</span><span class="go">Gérer →</span></span></a>`:"");
+    return ok?`<a class="tile" href="/api/ouvrir?app=${k}"><span class="ic">${ICON[k]}</span><h2>${esc(a.nom)}</h2><span class="foot">${foot}</span></a>`
+      :`<div class="tile off" aria-disabled="true"><span class="ic">${ICON[k]}</span><h2>${esc(a.nom)}</h2><span class="foot">${foot}</span></div>`}).join("")
+    +(ME.admin?`<a class="tile admin" href="#acces"><span class="ic">${ICON.cle}</span><h2>Accès</h2><span class="foot"><span class="pill warn">Admin</span><span class="go">Gérer →</span></span></a>`:"");
   $("#main").innerHTML=`<div class="screen">
-    <div><h1>Bonjour ${esc(ME.nom)}</h1><p class="lead">Choisissez l'application. Elle s'ouvre directement, sans retaper de code.</p></div>
+    <h1>Bonjour ${esc(ME.nom)}</h1>
     ${ME.secours?`<p class="note" style="color:var(--warn)">Vous êtes entré avec le code de secours. Pensez à vous créer un compte personnel dans Accès.</p>`:""}
-    <div class="tiles">${tuiles}</div>
-    <p class="note">Une tuile grisée veut dire que vous n'avez pas ce droit. Seul un administrateur peut le donner, depuis la page Accès.</p></div>`}
+    <div class="tiles">${tuiles}</div></div>`}
 
 function champsCode(avecActuel){return `${avecActuel?`<label class="field">Code actuel<input id="o" type="password" required autocomplete="current-password"></label>`:""}
   <label class="field">Nouveau code<input id="n1" type="password" required autocomplete="new-password"></label>
