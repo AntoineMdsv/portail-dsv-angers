@@ -129,7 +129,7 @@ document.addEventListener("click",e=>{const a=e.target.closest("a[href]");if(!a|
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const NIV={aucun:"Pas d'accès",consult:"Consultation",modif:"Modification"};
-const NIVEAUX={planning:["aucun","modif"],flotte:["aucun","consult","modif"],creneaux:["aucun","consult","modif"]};
+const NIVEAUX={planning:["aucun","consult","modif"],flotte:["aucun","consult","modif"],creneaux:["aucun","consult","modif"]};
 const APPS=["planning","flotte","creneaux"],COURT={planning:"Plannings",flotte:"Véhicules",creneaux:"Créneaux"};
 let ME=null,PERS=[];
 async function api(p,o={}){const r=await fetch("/api/"+p,{cache:"no-store",...o,headers:{"Content-Type":"application/json",...(o.headers||{})}});
