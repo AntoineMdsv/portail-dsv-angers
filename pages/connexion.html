@@ -20,12 +20,14 @@ button:disabled{opacity:.6}.err{color:var(--bad);font-size:14px;min-height:1.4em
 button.eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:36px;height:34px;padding:0;background:transparent;color:var(--fg);display:grid;place-items:center}
 button.eye svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.cache{position:absolute;width:1px;height:1px;padding:0;border:0;opacity:0;pointer-events:none}
 .credit{position:fixed;left:0;right:0;bottom:12px;margin:0;text-align:center;font-size:11px;opacity:.55}</style><style id="nozoom">html{-webkit-text-size-adjust:100%;text-size-adjust:100%}@media (pointer:coarse),(max-width:900px){input,select,textarea{font-size:16px!important}}</style>
 </head><body>
-<form class="box" id="f" autocomplete="off">
+<form class="box" id="f" method="post">
   <div class="brand"><img src="/logo.png" alt="DSV"><span>PORTAIL<small>DSV ANGERS · PLANNING ET VÉHICULES</small></span></div>
   <p class="banner" id="msg" hidden></p>
-  <label>Code personnel<span class="pw"><input id="c" type="password" required autofocus autocomplete="one-time-code" enterkeyhint="go"><button type="button" class="eye" id="eye" aria-label="Afficher le code" title="Afficher / masquer le code"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg></button></span></label>
+  <input id="u" class="cache" type="text" name="username" autocomplete="username" tabindex="-1" aria-hidden="true">
+  <label>Code personnel<span class="pw"><input id="c" name="password" type="password" required autofocus autocomplete="current-password" enterkeyhint="go"><button type="button" class="eye" id="eye" aria-label="Afficher le code" title="Afficher / masquer le code"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg></button></span></label>
   <p class="err" id="e" role="alert"></p>
   <button id="b" type="submit">Se connecter</button>
   <div class="under"><button type="button" class="link" id="oubli">Code oublié ?</button></div>
@@ -39,7 +41,8 @@ $("oubli").onclick=()=>info("Demandez à un administrateur (Antoine) : il vous d
 $("eye").onclick=()=>{const i=$("c"),h=i.type==="password";i.type=h?"text":"password";$("eye").setAttribute("aria-label",h?"Masquer le code":"Afficher le code");i.focus()};
 $("f").onsubmit=async ev=>{ev.preventDefault();const b=$("b"),e=$("e");b.disabled=true;e.textContent="";const t0=b.textContent;b.textContent="Connexion…";
   try{const r=await fetch("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code:$("c").value})});
-    if(r.ok){const k=await fetch("/api/moi",{cache:"no-store"});if(k.ok){location.replace("/");return}
+    // Le nom (champ caché) sert au navigateur pour ranger le code enregistré : une entrée par personne sur un même poste.
+    if(r.ok){const k=await fetch("/api/moi",{cache:"no-store"});if(k.ok){try{$("u").value=(await k.json()).nom||""}catch(_){}location.replace("/");return}
       e.textContent="Code accepté, mais le navigateur n'a pas gardé la connexion (erreur "+k.status+").";b.disabled=false;b.textContent=t0;return}
     e.textContent=r.status===429?"Trop de codes faux : patientez quelques minutes.":r.status===401?"Code incorrect ou désactivé.":"Erreur du serveur ("+r.status+") : "+(await r.text()).slice(0,200);$("c").select()}
   catch(_){e.textContent="Serveur injoignable : réessayez dans un instant."}
