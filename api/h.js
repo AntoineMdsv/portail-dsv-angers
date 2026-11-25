@@ -1,5 +1,5 @@
 // Serveur du portail DSV Angers (fonction Vercel) : connexion par code personnel, menu des applis,
-// gestion des personnes, des codes et des droits. Les applis Plannings, Gestion des véhicules et Créneaux gardent
+// gestion des personnes, des codes et des droits. Les applis Plannings, Gestion des véhicules, Créneaux et Suivi prestataires gardent
 // leur propre base : le portail leur passe un jeton signé à l'ouverture, puis répond à leurs vérifications.
 // Ce dépôt est public : aucun code ni aucune clé ici, tout est réglé dans Vercel.
 import pg from "pg";
@@ -23,9 +23,10 @@ const url_ = v => String(v || "").trim().replace(/\/+$/, "");
 const APPS = {
   planning: { nom: "Plannings", url: url_(process.env.PLANNING_URL), niveaux: ["aucun", "consult", "modif"] },
   flotte: { nom: "Gestion des véhicules", url: url_(process.env.FLOTTE_URL), niveaux: ["aucun", "consult", "modif"] },
-  creneaux: { nom: "Créneaux de livraison", url: url_(process.env.CRENEAUX_URL), niveaux: ["aucun", "consult", "modif"] }
+  creneaux: { nom: "Créneaux de livraison", url: url_(process.env.CRENEAUX_URL), niveaux: ["aucun", "consult", "modif"] },
+  prestataires: { nom: "Suivi prestataires", url: url_(process.env.PRESTATAIRES_URL), niveaux: ["aucun", "consult", "modif"] }
 };
-const VAR_URL = { planning: "PLANNING_URL", flotte: "FLOTTE_URL", creneaux: "CRENEAUX_URL" };
+const VAR_URL = { planning: "PLANNING_URL", flotte: "FLOTTE_URL", creneaux: "CRENEAUX_URL", prestataires: "PRESTATAIRES_URL" };
 const NIVEAU_NOM = { aucun: "pas d'accès", consult: "consultation", modif: "modification" };
 const JETON_S = 60;
 
@@ -44,12 +45,17 @@ async function init() {
     cle text NOT NULL UNIQUE, provisoire boolean NOT NULL DEFAULT false, planning text NOT NULL DEFAULT 'aucun', flotte text NOT NULL DEFAULT 'aucun',
     code_le timestamptz NOT NULL DEFAULT now(), vu timestamptz, cree timestamptz NOT NULL DEFAULT now())`,
     `ALTER TABLE personnes ADD COLUMN IF NOT EXISTS creneaux text NOT NULL DEFAULT 'aucun'`,
+    `ALTER TABLE personnes ADD COLUMN IF NOT EXISTS prestataires text NOT NULL DEFAULT 'aucun'`,
     `CREATE TABLE IF NOT EXISTS sessions (sid text PRIMARY KEY, pid text NOT NULL, exp timestamptz NOT NULL, fin boolean NOT NULL DEFAULT false)`,
     `CREATE TABLE IF NOT EXISTS echecs (ip text NOT NULL, t timestamptz NOT NULL DEFAULT now())`,
     `CREATE TABLE IF NOT EXISTS reglages (k text PRIMARY KEY, v text NOT NULL)`,
     `CREATE TABLE IF NOT EXISTS journal (id bigserial PRIMARY KEY, t timestamptz NOT NULL DEFAULT now(), qui text NOT NULL, texte text NOT NULL)`
   ].join(";\n"));
   await q(`INSERT INTO reglages (k, v) VALUES ('poivre', $1) ON CONFLICT (k) DO NOTHING`, [crypto.randomBytes(32).toString("hex")]);
+  // Une seule fois, à l'arrivée de l'appli Suivi prestataires : les administrateurs y ont le droit Modification
+  // (les autres personnes restent sans accès tant qu'un administrateur ne le donne pas dans Accès).
+  if ((await q(`INSERT INTO reglages (k, v) VALUES ('migr-prestataires', '1') ON CONFLICT (k) DO NOTHING`)).rowCount)
+    await q(`UPDATE personnes SET prestataires = 'modif' WHERE admin AND prestataires = 'aucun'`);
 }
 
 // Codes personnels : gardés sous forme d'empreinte, comme dans le planning (même calcul, les codes en ont été repris).
@@ -91,11 +97,11 @@ async function ouvrirSession(pid) {
   await q(`INSERT INTO sessions (sid, pid, exp) VALUES ($1, $2, now() + make_interval(secs => $3))`, [sid, pid, SESSION_S]);
   return sid;
 }
-const ADMIN_SECOURS = () => ({ id: "admin", nom: NOM_ADMIN, admin: true, actif: true, provisoire: false, planning: "modif", flotte: "modif", creneaux: "modif", secours: true });
+const ADMIN_SECOURS = () => ({ id: "admin", nom: NOM_ADMIN, admin: true, actif: true, provisoire: false, planning: "modif", flotte: "modif", creneaux: "modif", prestataires: "modif", secours: true });
 // La personne est relue à chaque appel : un accès retiré ou une session terminée coupe tout de suite.
 async function sessionDe(sid) {
   // Session et personne lues en une seule requête.
-  const s = (await q(`SELECT s.pid, p.id, p.nom, p.admin, p.provisoire, p.planning, p.flotte, p.creneaux FROM sessions s
+  const s = (await q(`SELECT s.pid, p.id, p.nom, p.admin, p.provisoire, p.planning, p.flotte, p.creneaux, p.prestataires FROM sessions s
     LEFT JOIN personnes p ON p.id = s.pid AND p.actif WHERE s.sid = $1 AND NOT s.fin AND s.exp > now()`, [sid])).rows[0];
   if (!s) return null;
   if (s.pid === "admin") return CODE_ADMIN.length >= MIN_CODE ? { ...ADMIN_SECOURS(), sid } : null;
@@ -123,7 +129,7 @@ async function blocked(ip) {
 // Jeton d'ouverture d'une appli : qui, ses droits, la session du portail ; valable 1 minute, signé avec CLE_PORTAIL.
 const signP = s => crypto.createHmac("sha256", CLE_PORTAIL).update(s).digest("base64url");
 function jetonPour(app, ses) {
-  const o = { app, sid: ses.sid, id: ses.id, nom: ses.nom, admin: !!ses.admin, planning: ses.planning, flotte: ses.flotte, creneaux: ses.creneaux,
+  const o = { app, sid: ses.sid, id: ses.id, nom: ses.nom, admin: !!ses.admin, planning: ses.planning, flotte: ses.flotte, creneaux: ses.creneaux, prestataires: ses.prestataires,
     exp: Math.floor(Date.now() / 1000) + JETON_S, jti: crypto.randomBytes(12).toString("base64url") };
   const b = Buffer.from(JSON.stringify(o)).toString("base64url");
   return b + "." + signP("jeton." + b);
@@ -165,7 +171,7 @@ async function body(req, limit = 64 * 1024) {
 }
 const jsonBody = async (req, limit) => { try { return JSON.parse((await body(req, limit)).toString("utf8")); } catch (_) { return undefined; } };
 const page = (res, f) => send(res, 200, "text/html; charset=utf-8", read(f));
-const PERSONNE = `SELECT id, nom, admin, actif, provisoire, planning, flotte, creneaux, code_le, vu FROM personnes`;
+const PERSONNE = `SELECT id, nom, admin, actif, provisoire, planning, flotte, creneaux, prestataires, code_le, vu FROM personnes`;
 
 export default async function handler(req, res) {
   const url = new URL(req.url, "http://x");
@@ -178,7 +184,7 @@ export default async function handler(req, res) {
   try {
     if (p === "/health") {
       if (!DB_URL) return json(res, 500, { ok: false, base: "absente : reliez une base Neon au projet (onglet Storage), puis Redeploy" });
-      try { const t = Date.now(); await q("SELECT 1"); return json(res, 200, { ok: true, base: "connectée", ms: Date.now() - t, cle: CLE_OK, planning: !!APPS.planning.url, flotte: !!APPS.flotte.url, creneaux: !!APPS.creneaux.url }); }
+      try { const t = Date.now(); await q("SELECT 1"); return json(res, 200, { ok: true, base: "connectée", ms: Date.now() - t, cle: CLE_OK, planning: !!APPS.planning.url, flotte: !!APPS.flotte.url, creneaux: !!APPS.creneaux.url, prestataires: !!APPS.prestataires.url }); }
       catch (e) { return json(res, 500, { ok: false, base: "erreur", detail: String(e.message || e).slice(0, 200) }); }
     }
     if (!DB_URL) return text(res, 500, "Base de données non configurée : ajoutez une base Neon au projet Vercel.");
@@ -191,7 +197,7 @@ export default async function handler(req, res) {
       const o = await jsonBody(req, 2000) || {};
       const ses = APPS[o.app] && typeof o.sid === "string" ? await sessionDe(o.sid) : null;
       if (!ses || ses.provisoire || ses[o.app] === "aucun") return json(res, 403, { ok: false });
-      return json(res, 200, { ok: true, id: ses.id, nom: ses.nom, admin: !!ses.admin, planning: ses.planning, flotte: ses.flotte, creneaux: ses.creneaux });
+      return json(res, 200, { ok: true, id: ses.id, nom: ses.nom, admin: !!ses.admin, planning: ses.planning, flotte: ses.flotte, creneaux: ses.creneaux, prestataires: ses.prestataires });
     }
 
     // Une écriture doit venir de la page du portail elle-même.
@@ -232,7 +238,7 @@ export default async function handler(req, res) {
     }
     if (p === "/page") return page(res, "pages/index.html");
     if (p === "/moi" && method === "GET")
-      return json(res, 200, { id: ses.id, nom: ses.nom, admin: !!ses.admin, provisoire: ses.provisoire, secours: !!ses.secours, planning: ses.planning, flotte: ses.flotte, creneaux: ses.creneaux,
+      return json(res, 200, { id: ses.id, nom: ses.nom, admin: !!ses.admin, provisoire: ses.provisoire, secours: !!ses.secours, planning: ses.planning, flotte: ses.flotte, creneaux: ses.creneaux, prestataires: ses.prestataires,
         apps: Object.fromEntries(Object.entries(APPS).map(([k, a]) => [k, { nom: a.nom, pret: !!(a.url && CLE_OK), url: a.url && CLE_OK ? a.url : "" }])) });
 
     // Changer son propre code. Avec un code provisoire, on vient de le taper : pas besoin de le redonner.
@@ -273,13 +279,13 @@ export default async function handler(req, res) {
         const o = await jsonBody(req, 4000) || {};
         const nom = clean(o.nom, 40);
         if (!nom) return text(res, 400, "Indique le nom");
-        const id = newId(), code = await codeProvisoire(), pl = niveau("planning", o.planning), fl = niveau("flotte", o.flotte), cr = niveau("creneaux", o.creneaux);
-        await q(`INSERT INTO personnes (id, nom, admin, cle, provisoire, planning, flotte, creneaux) VALUES ($1, $2, $3, $4, true, $5, $6, $7)`, [id, nom, !!o.admin, await cleDe(code), pl, fl, cr]);
-        await log(ses.nom, `${nom} ajouté : planning ${NIVEAU_NOM[pl]}, véhicules ${NIVEAU_NOM[fl]}, créneaux ${NIVEAU_NOM[cr]}${o.admin ? ", administrateur" : ""}`);
+        const id = newId(), code = await codeProvisoire(), pl = niveau("planning", o.planning), fl = niveau("flotte", o.flotte), cr = niveau("creneaux", o.creneaux), ps = niveau("prestataires", o.prestataires);
+        await q(`INSERT INTO personnes (id, nom, admin, cle, provisoire, planning, flotte, creneaux, prestataires) VALUES ($1, $2, $3, $4, true, $5, $6, $7, $8)`, [id, nom, !!o.admin, await cleDe(code), pl, fl, cr, ps]);
+        await log(ses.nom, `${nom} ajouté : planning ${NIVEAU_NOM[pl]}, véhicules ${NIVEAU_NOM[fl]}, créneaux ${NIVEAU_NOM[cr]}, prestataires ${NIVEAU_NOM[ps]}${o.admin ? ", administrateur" : ""}`);
         return json(res, 200, { ok: true, id, code });
       }
       if ((m = /^\/personnes\/(p[0-9a-f]{10})(\/code)?$/.exec(p))) {
-        const pr = (await q(`SELECT nom, admin, actif, planning, flotte, creneaux FROM personnes WHERE id = $1`, [m[1]])).rows[0];
+        const pr = (await q(`SELECT nom, admin, actif, planning, flotte, creneaux, prestataires FROM personnes WHERE id = $1`, [m[1]])).rows[0];
         if (!pr) return text(res, 404, "Personne inconnue");
         // Nouveau code provisoire : l'ancien ne marche plus, la personne choisira le sien à la prochaine connexion.
         if (m[2] && method === "POST") {
@@ -292,14 +298,15 @@ export default async function handler(req, res) {
           const o = await jsonBody(req, 4000) || {};
           const moi = m[1] === ses.id;
           const v = { nom: clean(o.nom, 40) || pr.nom, admin: moi ? pr.admin : !!o.admin, actif: moi ? true : o.actif !== false,
-            planning: niveau("planning", o.planning), flotte: niveau("flotte", o.flotte), creneaux: niveau("creneaux", o.creneaux) };
-          await q(`UPDATE personnes SET nom = $2, admin = $3, actif = $4, planning = $5, flotte = $6, creneaux = $7 WHERE id = $1`, [m[1], v.nom, v.admin, v.actif, v.planning, v.flotte, v.creneaux]);
+            planning: niveau("planning", o.planning), flotte: niveau("flotte", o.flotte), creneaux: niveau("creneaux", o.creneaux), prestataires: niveau("prestataires", o.prestataires) };
+          await q(`UPDATE personnes SET nom = $2, admin = $3, actif = $4, planning = $5, flotte = $6, creneaux = $7, prestataires = $8 WHERE id = $1`, [m[1], v.nom, v.admin, v.actif, v.planning, v.flotte, v.creneaux, v.prestataires]);
           if (!v.actif) await q(`UPDATE sessions SET fin = true WHERE pid = $1`, [m[1]]);
           const ch = [];
           if (v.nom !== pr.nom) ch.push(`renommé en ${v.nom}`);
           if (v.planning !== pr.planning) ch.push(`planning : ${NIVEAU_NOM[v.planning]}`);
           if (v.flotte !== pr.flotte) ch.push(`véhicules : ${NIVEAU_NOM[v.flotte]}`);
           if (v.creneaux !== pr.creneaux) ch.push(`créneaux : ${NIVEAU_NOM[v.creneaux]}`);
+          if (v.prestataires !== pr.prestataires) ch.push(`prestataires : ${NIVEAU_NOM[v.prestataires]}`);
           if (v.admin !== pr.admin) ch.push(v.admin ? "devient administrateur" : "n'est plus administrateur");
           if (v.actif !== pr.actif) ch.push(v.actif ? "réactivé" : "désactivé");
           if (ch.length) await log(ses.nom, `${pr.nom} : ${ch.join(", ")}`);
