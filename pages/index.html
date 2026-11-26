@@ -129,8 +129,8 @@ document.addEventListener("click",e=>{const a=e.target.closest("a[href]");if(!a|
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const NIV={aucun:"Pas d'accès",consult:"Consultation",modif:"Modification"};
-const NIVEAUX={planning:["aucun","consult","modif"],flotte:["aucun","consult","modif"],creneaux:["aucun","consult","modif"]};
-const APPS=["planning","flotte","creneaux"],COURT={planning:"Plannings",flotte:"Véhicules",creneaux:"Créneaux"};
+const NIVEAUX={planning:["aucun","consult","modif"],flotte:["aucun","consult","modif"],creneaux:["aucun","consult","modif"],prestataires:["aucun","consult","modif"]};
+const APPS=["planning","flotte","creneaux","prestataires"],COURT={planning:"Plannings",flotte:"Véhicules",creneaux:"Créneaux",prestataires:"Prestataires"};
 let ME=null,PERS=[];
 async function api(p,o={}){const r=await fetch("/api/"+p,{cache:"no-store",...o,headers:{"Content-Type":"application/json",...(o.headers||{})}});
   if(r.status===401){location.replace("/connexion");throw new Error("Connexion requise")}
@@ -148,6 +148,7 @@ const ICON={
   planning:'<svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M7 13.5h3M14 13.5h3M7 17h3"/></svg>',
   flotte:'<svg viewBox="0 0 24 24"><path d="M2 6h11v10H2zM13 9.5h4.5L21 13v3h-8z"/><circle cx="6" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></svg>',
   creneaux:'<svg viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="3.2"/><path d="M12 8.6V10l1 .8"/></svg>',
+  prestataires:'<svg viewBox="0 0 24 24"><path d="M6 2.5h9l3.5 3.5v15.5H6z"/><path d="M14.5 2.5V6.5h4"/><path d="M9 11h6M9 14.5h6M9 18h3.5"/></svg>',
   cle:'<svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3M14 9l2 2"/></svg>',
   cadenas:'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>'
 };
@@ -203,7 +204,7 @@ function vueAide(){$("#main").innerHTML=`<div class="screen">
 function ligne(p){const moi=p.id===ME.id,sel=(app)=>`<select data-f="${app}" data-id="${p.id}" aria-label="${COURT[app]} de ${esc(p.nom)}" ${p.actif?"":"disabled"}>${NIVEAUX[app].map(k=>`<option value="${k}" ${p[app]===k?"selected":""}>${NIV[k]}</option>`).join("")}</select>`;
   return `<tr class="${p.actif?"":"inactif"}">
     <td><span class="nm">${esc(p.nom)}${moi?" (vous)":""}</span><span class="sub">Vu ${esc(quand(p.vu))}</span></td>
-    <td>${sel("planning")}</td><td>${sel("flotte")}</td><td>${sel("creneaux")}</td>
+    <td>${sel("planning")}</td><td>${sel("flotte")}</td><td>${sel("creneaux")}</td><td>${sel("prestataires")}</td>
     <td><label class="chk"><input type="checkbox" data-f="admin" data-id="${p.id}" ${p.admin?"checked":""} ${p.actif&&!moi?"":"disabled"}>Admin</label></td>
     <td>${!p.actif?'<span class="pill off">Désactivé</span>':p.provisoire?'<span class="pill warn">Provisoire</span><span class="sub">pas encore changé</span>':`<span class="pill ok">Personnel</span><span class="sub">depuis le ${new Date(p.code_le).toLocaleDateString("fr-FR")}</span>`}</td>
     <td><div class="acts">${p.actif?`<button class="btn sec sm" data-reset="${p.id}">Réinitialiser le code</button>${moi?"":`<button class="btn sec sm" data-off="${p.id}">Désactiver</button>`}`:`<button class="btn sec sm" data-on="${p.id}">Réactiver</button><button class="btn sec sm" data-del="${p.id}">Supprimer</button>`}</div></td></tr>`}
@@ -218,17 +219,18 @@ async function vueAcces(){
       <label class="field">Plannings<select id="apl">${NIVEAUX.planning.slice().reverse().map(k=>`<option value="${k}">${NIV[k]}</option>`).join("")}</select></label>
       <label class="field">Véhicules<select id="afl"><option value="consult">Consultation</option><option value="modif">Modification</option><option value="aucun">Pas d'accès</option></select></label>
       <label class="field">Créneaux<select id="acr"><option value="consult">Consultation</option><option value="modif">Modification</option><option value="aucun">Pas d'accès</option></select></label>
+      <label class="field">Prestataires<select id="aps"><option value="aucun">Pas d'accès</option><option value="consult">Consultation</option><option value="modif">Modification</option></select></label>
       <label class="chk"><input type="checkbox" id="aad">Administrateur</label>
       <button class="btn" type="submit">Créer et afficher le code</button>
     </form>
-    ${PERS.length?`<div class="card tbl-wrap"><table><thead><tr><th>Personne</th><th>Plannings</th><th>Gestion des véhicules</th><th>Créneaux</th><th>Portail</th><th>Code</th><th></th></tr></thead><tbody>${PERS.map(ligne).join("")}</tbody></table></div>
+    ${PERS.length?`<div class="card tbl-wrap"><table><thead><tr><th>Personne</th><th>Plannings</th><th>Gestion des véhicules</th><th>Créneaux</th><th>Prestataires</th><th>Portail</th><th>Code</th><th></th></tr></thead><tbody>${PERS.map(ligne).join("")}</tbody></table></div>
     <div class="legend"><span><span class="pill ok">Personnel</span> la personne a choisi son code</span><span><span class="pill warn">Provisoire</span> donné par un admin, à changer à la 1<sup>re</sup> connexion</span><span><span class="pill off">Désactivé</span> ne peut plus entrer, l'historique garde son nom</span></div>`
     :`<div class="card side"><h3>Personne pour l'instant</h3><p class="note">Ajoutez une personne avec le bouton ci-dessus : le portail affiche son code provisoire.</p></div>`}
     <div class="help">
       <div class="card side"><h3>Derniers changements</h3>${journal.length?`<ul class="jr">${journal.slice(0,40).map(j=>`<li><time>${esc(quand(j.t))}</time>${esc(j.qui)} · ${esc(j.texte)}</li>`).join("")}</ul>`:`<p class="note">Rien pour l'instant.</p>`}</div>
     </div></div>`;
   $("#addbtn").onclick=()=>{$("#addf").hidden=!$("#addf").hidden;if(!$("#addf").hidden)$("#an").focus()};
-  $("#addf").onsubmit=async e=>{e.preventDefault();const nom=$("#an").value.trim();try{const r=await api("personnes",{method:"POST",body:JSON.stringify({nom,planning:$("#apl").value,flotte:$("#afl").value,creneaux:$("#acr").value,admin:$("#aad").checked})});
+  $("#addf").onsubmit=async e=>{e.preventDefault();const nom=$("#an").value.trim();try{const r=await api("personnes",{method:"POST",body:JSON.stringify({nom,planning:$("#apl").value,flotte:$("#afl").value,creneaux:$("#acr").value,prestataires:$("#aps").value,admin:$("#aad").checked})});
     await vueAcces();montrerCode(nom,r.code,"créé")}catch(x){toast(x.message)}};
   document.querySelectorAll("td select,td input[type=checkbox]").forEach(el=>el.onchange=async()=>{const p=PERS.find(x=>x.id===el.dataset.id),f=el.dataset.f;
     const v={...p,[f]:f==="admin"?el.checked:el.value};try{await api("personnes/"+p.id,{method:"PUT",body:JSON.stringify(v)});Object.assign(p,v);toast(`Droits de ${p.nom} enregistrés`)}catch(x){toast(x.message);vueAcces()}});
