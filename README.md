@@ -1,6 +1,6 @@
 # Portail DSV Angers
 
-Point d'entrée commun aux applis : **Plannings** (`planning-dsv-angers`), **Gestion des véhicules** (`flotte-dsv-angers`), **Créneaux de livraison** (`creneaux-dsv-angers`) et **Suivi prestataires** (`suivi_presta_dsv49`). On s'y connecte une fois avec son code personnel, puis une tuile par appli l'ouvre sans retaper de code. La page Accès gère les personnes, leurs codes et leurs droits.
+Point d'entrée commun aux applis : **Plannings** (`planning-dsv-angers`), **Gestion des véhicules** (`flotte-dsv-angers`), **Créneaux de livraison** (`creneaux-dsv-angers`) et **Suivi facturation prestataires** (`suivi_presta_dsv49`). On s'y connecte une fois avec son code personnel, puis une tuile par appli l'ouvre sans retaper de code. La page Accès gère les personnes, leurs codes et leurs droits.
 
 Les applis gardent leur dépôt, leur adresse et leur base Neon. Le portail a sa petite base à lui (personnes, codes, sessions).
 
