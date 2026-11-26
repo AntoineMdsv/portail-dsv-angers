@@ -24,7 +24,7 @@ const APPS = {
   planning: { nom: "Plannings", url: url_(process.env.PLANNING_URL), niveaux: ["aucun", "consult", "modif"] },
   flotte: { nom: "Gestion des véhicules", url: url_(process.env.FLOTTE_URL), niveaux: ["aucun", "consult", "modif"] },
   creneaux: { nom: "Créneaux de livraison", url: url_(process.env.CRENEAUX_URL), niveaux: ["aucun", "consult", "modif"] },
-  prestataires: { nom: "Suivi prestataires", url: url_(process.env.PRESTATAIRES_URL), niveaux: ["aucun", "consult", "modif"] }
+  prestataires: { nom: "Suivi facturation prestataires", url: url_(process.env.PRESTATAIRES_URL), niveaux: ["aucun", "consult", "modif"] }
 };
 const VAR_URL = { planning: "PLANNING_URL", flotte: "FLOTTE_URL", creneaux: "CRENEAUX_URL", prestataires: "PRESTATAIRES_URL" };
 const NIVEAU_NOM = { aucun: "pas d'accès", consult: "consultation", modif: "modification" };
